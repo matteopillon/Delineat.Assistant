@@ -1,0 +1,20 @@
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace Delineat.Assistant.Core.Data.Models
+{
+    public class Permission
+    {
+        [Key]
+        public string Id { get; set; }
+
+        public string Name { get; set; }
+
+        public bool Enabled { get; set; }
+        public ICollection<Role> Roles { get; set; }
+    }
+}

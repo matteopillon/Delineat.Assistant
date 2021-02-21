@@ -1,0 +1,12 @@
+﻿{
+
+  "SmtpServer": "smtp.gmail.com",
+  "EmailUsername": "matteo.pillon@metide.com",
+  "EmailPassword": "rastafari80",
+  "EnableSsl": true,
+  "Port": 587,
+  "SenderEmail": "reminder@delineat.it",
+  "InternalEmails": [
+    "@delineat", "@icode"
+  ]
+}

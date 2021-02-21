@@ -1,0 +1,60 @@
+﻿{
+  "Stores": [
+    {
+      "name": "Archivio2017",
+      "description": "Archivio 2017",
+      "storeTypeName": "Delineat.Workflow.Core.Stores.DWFileFolderStore, Delineat.Workflow.Core.Stores",
+      "settings": [
+        {
+          "key": "rootDirectoryPath",
+          "value": "\\\\192.168.10.235\\DATI\\ARCHIVIO_2017"
+        }
+      ]
+    },
+    {
+      "name": "Archivio2016",
+      "description": "Archivio 2016",
+      "storeTypeName": "Delineat.Workflow.Core.Stores.DWFileFolderStore, Delineat.Workflow.Core.Stores",
+      "settings": [
+        {
+          "key": "rootDirectoryPath",
+          "value": "\\\\192.168.10.235\\DATI\\ARCHIVIO_2016"
+        }
+      ]
+    },
+    {
+      "name": "Archivio2015",
+      "description": "Archivio 2015",
+      "storeTypeName": "Delineat.Workflow.Core.Stores.DWFolderStore, Delineat.Workflow.Core.Stores",
+      "settings": [
+        {
+          "key": "rootDirectoryPath",
+          "value": "\\\\192.168.10.235\\DATI\\ARCHIVIO_2015"
+        }
+      ]
+    },
+    {
+      "name": "ArchivioV",
+      "description": "Archivio 2016 su V",
+      "storeTypeName": "Delineat.Workflow.Core.Stores.DWFolderStore, Delineat.Workflow.Core.Stores",
+      "settings": [
+        {
+          "key": "rootDirectoryPath",
+          "value": "\\\\192.168.10.235\\Condivisa\\ARCHIVIO"
+        }
+      ]
+    },
+    {
+      "name": "Archivio2017V",
+      "description": "Archivio 2017 su V",
+      "storeTypeName": "Delineat.Workflow.Core.Stores.DWFolderStore, Delineat.Workflow.Core.Stores",
+      "settings": [
+        {
+          "key": "rootDirectoryPath",
+          "value": "\\\\192.168.10.235\\Condivisa\\ARCH_2017"
+        }
+      ]
+    }
+
+  ]
+}

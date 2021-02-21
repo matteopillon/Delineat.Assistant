@@ -1,0 +1,52 @@
+﻿{
+  "Stores": [
+    {
+      "name": "ArchivioDB",
+      "description": "ArchivioDB",
+      "storeTypeName": "Delineat.Assistant.Core.Stores.DADBFolderStore, Delineat.Assistant.Core.Stores",
+      "settings": [
+        {
+          "key": "connectionString",
+          "value": "Data Source=localhost;Initial Catalog=workflow;Integrated Security=true;"
+        }
+      ],
+      "syncStores": [
+        {
+          "name": "Archivio2020",
+          "description": "Archivio 2020",
+          "storeTypeName": "Delineat.Assistant.Core.Stores.DAFileFolderStore, Delineat.Assistant.Core.Stores",
+          "settings": [
+            {
+              "key": "rootDirectoryPath",
+              "value": "C:\\Delineat\\DATI\\ARCHIVIO_2020"
+            }
+          ]
+        },
+        {
+          "name": "Archivio2019",
+          "description": "Archivio 2019",
+          "storeTypeName": "Delineat.Assistant.Core.Stores.DAFileFolderStore, Delineat.Assistant.Core.Stores",
+          "settings": [
+            {
+              "key": "rootDirectoryPath",
+              "value": "C:\\Delineat\\DATI\\ARCHIVIO_2019"
+            }
+          ]
+        },
+        {
+          "name": "Archivio2018",
+          "description": "Archivio 2018",
+          "storeTypeName": "Delineat.Assistant.Core.Stores.DAFileFolderStore, Delineat.Assistant.Core.Stores",
+          "settings": [
+            {
+              "key": "rootDirectoryPath",
+              "value": "C:\\Delineat\\DATI\\ARCHIVIO_2018"
+            }
+          ]
+        }
+
+      ]
+    }
+
+  ]
+}

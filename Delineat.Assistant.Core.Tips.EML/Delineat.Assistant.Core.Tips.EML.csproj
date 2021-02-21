@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <Configurations>Debug;Release;DebugStaging;ReleaseStaging</Configurations>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Reference Include="Interop.ADODB">
+      <HintPath>..\Libs\Eml\Interop.ADODB.dll</HintPath>
+    </Reference>
+    <Reference Include="Interop.CDO">
+      <HintPath>..\Libs\Eml\Interop.CDO.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+</Project>

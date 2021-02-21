@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net5.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Delineat.Assistant.Core.Data\Delineat.Assistant.Core.Data.csproj" />
+    <ProjectReference Include="..\Delineat.Assistant.Models\Delineat.Assistant.Models.csproj" />
+  </ItemGroup>
+
+</Project>
