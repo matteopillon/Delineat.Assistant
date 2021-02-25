@@ -14,14 +14,9 @@ namespace Delineat.Assistant.API.Controllers
     {
         private readonly IOptions<DAClientConfiguration> clientConfiguration;
 
-        public ConfigController(IOptions<DAClientConfiguration> clientConfiguration, ILoggerFactory loggerFactory) : base(loggerFactory)
+        public ConfigController(IOptions<DAClientConfiguration> clientConfiguration, ILogger<ConfigController> logger) : base(logger)
         {
             this.clientConfiguration = clientConfiguration;
-        }
-
-        protected override ILogger MakeLogger(ILoggerFactory loggerFactory)
-        {
-            return loggerFactory.CreateLogger<ConfigController>();
         }
 
         [HttpGet]

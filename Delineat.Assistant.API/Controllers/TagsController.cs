@@ -1,5 +1,6 @@
 ﻿using Delineat.Assistant.API.Models;
 using Delineat.Assistant.API.Validators;
+using Delineat.Assistant.Core.Interfaces;
 using Delineat.Assistant.Core.Stores.Configuration;
 using Delineat.Assistant.Models;
 using Microsoft.AspNetCore.Http;
@@ -15,30 +16,23 @@ namespace Delineat.Assistant.API.Controllers
     [ApiController]
     public class TagsController : StoreBaseController
     {
-        public TagsController(Microsoft.Extensions.Options.IOptions<DAStoresConfiguration> storesConfiguration,
-            ILoggerFactory loggerFactory) : base(storesConfiguration, loggerFactory)
+        public TagsController(IDAStore store,
+            ILogger<TagsController> logger) : base(store, logger)
         {
-            
-        }
 
-        protected override ILogger MakeLogger(ILoggerFactory loggerFactory)
-        {
-            return loggerFactory.CreateLogger<TagsController>();
         }
 
         [HttpGet]
         public ActionResult<DWTag[]> GetTags()
-        {          
+        {
             try
             {
                 var tags = new List<DWTag>();
-                var stores = GetStores();
-                foreach (var store in stores)
-                {
-                    tags.AddRange(store.GetTags());
-                }
+
+                tags.AddRange(Store.GetTags());
+
                 return tags.ToArray();
-               
+
             }
             catch (Exception ex)
             {

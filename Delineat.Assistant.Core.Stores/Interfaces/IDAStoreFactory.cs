@@ -3,8 +3,8 @@ using System.Collections.Generic;
 
 namespace Delineat.Assistant.Core.Stores.Intefaces
 {
-    public interface IDAStoresFactory
+    public interface IDAStoreFactory
     {
-        List<IDAStore> CreateStores();
+        IDAStore MakeStore();
     }
 }

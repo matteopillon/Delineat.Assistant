@@ -4,6 +4,7 @@ using Delineat.Assistant.Core.Interfaces;
 using Delineat.Assistant.Core.Stores.Configuration;
 using Delineat.Assistant.Models;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
 using System.Net;
@@ -16,57 +17,48 @@ namespace Delineat.Assistant.API.WorkerJobs
         private readonly DAEmailConfiguration emailConfiguration;
         private readonly ILogger logger;
         private readonly DAStoresConfiguration storesConfiguration;
+        private readonly IDAStore store;
 
-        public DANoteNotifierJob(DAStoresConfiguration storesConfiguration, DAEmailConfiguration emailConfiguration, ILoggerFactory loggerFactory)
+        public DANoteNotifierJob(IOptions<DAStoresConfiguration> storesConfiguration, IOptions<DAEmailConfiguration> emailConfiguration, ILoggerFactory loggerFactory, IDAStore store)
         {
-            this.storesConfiguration = storesConfiguration;
-            this.emailConfiguration = emailConfiguration;
+            this.storesConfiguration = storesConfiguration.Value;
+            this.emailConfiguration = emailConfiguration.Value;
             if (loggerFactory != null)
                 this.logger = loggerFactory.CreateLogger<DANoteNotifierJob>();
+            this.store = store;
         }
 
-        protected List<IDAStore> GetStores()
-        {
-            var storeFactory = new Core.Stores.Factories.DAConfigurationStoresFactory(this.storesConfiguration,logger);
-            var stores = storeFactory.CreateStores();
-            if (stores == null || stores.Count == 0)
-            {
-                throw new DAApplicationException("Nessuno store configurato nel servizio");
-            }
-            return stores;
-        }
 
         public bool Execute()
         {
             try
             {
-                foreach (var store in GetStores())
+
+                foreach (var note in store.GetUnremindedNotes())
                 {
-                    foreach (var note in store.GetUnremindedNotes())
+                    if (note.RemainderDate <= DateTime.Now)
                     {
-                        if (note.RemainderDate <= DateTime.Now)
+                        string subject = "Promemoria";
+                        var noteParent = store.GetNoteScope(note);
+
+                        if (noteParent.Job != null)
                         {
-                            string subject = "Promemoria";
-                            var noteParent = store.GetNoteScope(note);
+                            subject += $" - {noteParent.Job.Code} - {noteParent.Job.Description}";
+                        }
 
-                            if (noteParent.Job != null)
-                            {
-                                subject += $" - {noteParent.Job.Code} - {noteParent.Job.Description}";
-                            }
+                        if (noteParent.Item != null)
+                        {
+                            subject += $" - {noteParent.Item.Description}";
+                        }
 
-                            if (noteParent.Item != null)
-                            {
-                                subject += $" - {noteParent.Item.Description}";
-                            }
-
-                            if (SendRemainderEmail(subject, note))
-                            {
-                                note.RemaindedDate = DateTime.Now;
-                                store.UpdateNote(note);
-                            }
+                        if (SendRemainderEmail(subject, note))
+                        {
+                            note.RemaindedDate = DateTime.Now;
+                            store.UpdateNote(note);
                         }
                     }
                 }
+
             }
             catch (Exception ex)
             {

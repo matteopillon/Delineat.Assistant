@@ -1,50 +1,37 @@
 ﻿{
   "Stores": [
+
     {
-      "name": "ArchivioDB",
-      "description": "ArchivioDB",
-      "storeTypeName": "Delineat.Workflow.Core.Stores.DWDBFolderStore, Delineat.Workflow.Core.Stores",
+      "name": "Archivio2017",
+      "description": "Archivio 2017",
+      "storeTypeName": "Delineat.Workflow.Core.Stores.DWFileFolderStore, Delineat.Workflow.Core.Stores",
       "settings": [
         {
-          "key": "connectionString",
-          "value": "Server=tcp:icode.database.windows.net,1433;Initial Catalog=delineat.workflow;Persist Security Info=False;User ID=matteo;Password=Rastafar1Azure80;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;"
+          "key": "rootDirectoryPath",
+          "value": "C:\\Delineat\\DATI\\ARCHIVIO_2017"
         }
-      ],
-      "syncStores": [
+      ]
+    },
+    {
+      "name": "Archivio2016",
+      "description": "Archivio 2016",
+      "storeTypeName": "Delineat.Workflow.Core.Stores.DWFileFolderStore, Delineat.Workflow.Core.Stores",
+      "settings": [
         {
-          "name": "Archivio2017",
-          "description": "Archivio 2017",
-          "storeTypeName": "Delineat.Workflow.Core.Stores.DWFileFolderStore, Delineat.Workflow.Core.Stores",
-          "settings": [
-            {
-              "key": "rootDirectoryPath",
-              "value": "C:\\Delineat\\DATI\\ARCHIVIO_2017"
-            }
-          ]
-        },
-        {
-          "name": "Archivio2016",
-          "description": "Archivio 2016",
-          "storeTypeName": "Delineat.Workflow.Core.Stores.DWFileFolderStore, Delineat.Workflow.Core.Stores",
-          "settings": [
-            {
-              "key": "rootDirectoryPath",
-              "value": "C:\\Delineat\\DATI\\ARCHIVIO_2016"
-            }
-          ]
-        },
-        {
-          "name": "Archivio2015",
-          "description": "Archivio 2015",
-          "storeTypeName": "Delineat.Workflow.Core.Stores.DWFileFolderStore, Delineat.Workflow.Core.Stores",
-          "settings": [
-            {
-              "key": "rootDirectoryPath",
-              "value": "C:\\Delineat\\DATI\\ARCHIVIO_2015"
-            }
-          ]
+          "key": "rootDirectoryPath",
+          "value": "C:\\Delineat\\DATI\\ARCHIVIO_2016"
         }
-
+      ]
+    },
+    {
+      "name": "Archivio2015",
+      "description": "Archivio 2015",
+      "storeTypeName": "Delineat.Workflow.Core.Stores.DWFileFolderStore, Delineat.Workflow.Core.Stores",
+      "settings": [
+        {
+          "key": "rootDirectoryPath",
+          "value": "C:\\Delineat\\DATI\\ARCHIVIO_2015"
+        }
       ]
     }
 

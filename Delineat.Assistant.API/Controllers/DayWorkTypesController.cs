@@ -22,18 +22,11 @@ namespace Delineat.Assistant.API.Controllers
         private readonly DADWObjectFactory dwObjectFactory;
         private readonly DAAssistantDBContext assistantDBContext;
 
-        public DayWorkTypesController(DAAssistantDBContext assistantDBContext, ILoggerFactory loggerFactory) : base( loggerFactory)
+        public DayWorkTypesController(DAAssistantDBContext assistantDBContext, ILogger<DayWorkTypesController> logger) : base(logger)
         {
             this.dwObjectFactory = new DADWObjectFactory(assistantDBContext);
             this.assistantDBContext = assistantDBContext;
         }
-
-        protected override ILogger MakeLogger(ILoggerFactory loggerFactory)
-        {
-            return loggerFactory.CreateLogger<DayWorkTypesController>();
-        }
-
-
 
         [HttpGet()]
         public ActionResult<DWDayWorkType[]> GetDayWorkTypes()

@@ -14,28 +14,19 @@ namespace Delineat.Assistant.API.Controllers
 {
     public class StoreBaseController : BaseController
     {
-        private readonly IOptions<DAStoresConfiguration> storeConfiguration;
-       
+         private readonly IDAStore store;
 
-        public StoreBaseController(Microsoft.Extensions.Options.IOptions<DAStoresConfiguration> storesConfiguration, ILoggerFactory loggerFactory) : base(loggerFactory)
+        public StoreBaseController(IDAStore store, ILogger logger) : base(logger)
         {
-            this.storeConfiguration = storesConfiguration;
+            this.store = store;
         }
 
-        protected override ILogger MakeLogger(ILoggerFactory loggerFactory)
+        protected IDAStore Store
         {
-            return loggerFactory.CreateLogger<StoreBaseController>();
-        }
-
-
-        protected List<IDAStore> GetStores()
-        {
-            var stores = new DAStoresManager(loggerFactory, this.storeConfiguration.Value).GetStores();
-            if (stores == null || stores.Count == 0)
+            get
             {
-                throw new DAApplicationException("Nessuno store configurato nel servizio");
+                return store;
             }
-            return stores;
         }
     }
 }

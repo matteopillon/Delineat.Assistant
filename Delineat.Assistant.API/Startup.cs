@@ -1,7 +1,10 @@
 using Delineat.Assistant.API.Configuration;
 using Delineat.Assistant.Core.Data;
+using Delineat.Assistant.Core.Interfaces;
 using Delineat.Assistant.Core.Stores;
 using Delineat.Assistant.Core.Stores.Configuration;
+using Delineat.Assistant.Core.Stores.Factories;
+using Delineat.Assistant.Core.Stores.Intefaces;
 using Delineat.Assistant.Core.Users;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -12,8 +15,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Microsoft.OpenApi.Models;
-using System;
 
 namespace Delineat.Assistant.API
 {
@@ -45,6 +48,16 @@ namespace Delineat.Assistant.API
             {
                 options.UseSqlServer("name = ConnectionStrings:DefaultConnection");
             });
+
+            services.AddScoped<IDAStoreFactory>((services) =>
+            {
+                
+                    var storesConfiguration = services.GetService<IOptions<DAStoresConfiguration>>();
+                    return new DAConfigurationDBStoreFactory(services.GetService<DAAssistantDBContext>(), storesConfiguration.Value, services.GetService<ILoggerFactory>());
+                
+            });
+
+            services.AddScoped<IDAStore>((services) => services.GetService<IDAStoreFactory>().MakeStore());
 
             services.AddMemoryCache();
 
@@ -102,7 +115,7 @@ namespace Delineat.Assistant.API
             {
                 c.SwaggerEndpoint("/swagger/v1/swagger.json", "Assistant Api v1");
             });
-            
+
         }
     }
 }

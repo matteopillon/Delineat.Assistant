@@ -1,5 +1,6 @@
 ﻿using Delineat.Assistant.API.Models;
 using Delineat.Assistant.API.Validators;
+using Delineat.Assistant.Core.Interfaces;
 using Delineat.Assistant.Core.Stores.Configuration;
 using Delineat.Assistant.Models;
 using Microsoft.AspNetCore.Http;
@@ -20,15 +21,10 @@ namespace Delineat.Assistant.API.Controllers
     {
         private readonly IMemoryCache memoryCache;
         private const string kJobsCacheKey = "JOBS_CACHE_KEY";
-        public JobsController(Microsoft.Extensions.Options.IOptions<DAStoresConfiguration> storesConfiguration,
-            ILoggerFactory loggerFactory, IMemoryCache memoryCache) : base(storesConfiguration, loggerFactory)
+        public JobsController(IDAStore store,
+            ILogger<JobsController> logger, IMemoryCache memoryCache) : base(store, logger)
         {
             this.memoryCache = memoryCache;
-        }
-
-        protected override ILogger MakeLogger(ILoggerFactory loggerFactory)
-        {
-            return loggerFactory.CreateLogger<JobsController>();
         }
 
         [HttpGet]
@@ -40,11 +36,8 @@ namespace Delineat.Assistant.API.Controllers
                 var jobs = memoryCache?.Get(kJobsCacheKey) as List<DWJob> ?? new List<DWJob>();
                 if (jobs.Count == 0)
                 {
-                    var stores = GetStores();
-                    foreach (var store in stores)
-                    {
-                        jobs.AddRange(store.GetJobs());
-                    }
+                    jobs.AddRange(Store.GetJobs());
+
                     memoryCache?.Set(nameof(DWJob), jobs);
                 }
                 return jobs.ToArray();
@@ -61,20 +54,18 @@ namespace Delineat.Assistant.API.Controllers
 
             try
             {
-                var stores = GetStores();
 
-                foreach (var store in stores)
+                var job = Store.GetJob(id);
+                if (job != null)
                 {
-                    var job = store.GetJob(id);
-                    if (job != null)
-                    {
-                        job.Items.AddRange(store.GetJobItems(id));
-                        job.Notes.AddRange(store.GetJobNotes(id));
-                        return job;
-                    }
+                    job.Items.AddRange(Store.GetJobItems(id));
+                    job.Notes.AddRange(Store.GetJobNotes(id));
+                    return job;
                 }
-
-                return NotFound();
+                else
+                {
+                    return NotFound();
+                }
 
             }
             catch (Exception ex)
@@ -89,17 +80,17 @@ namespace Delineat.Assistant.API.Controllers
 
             try
             {
-                var stores = GetStores();
-                foreach (var store in stores)
+
+                if (Store.DeleteJob(id).Stored)
                 {
-                    if (store.DeleteJob(id).Stored)
-                    {
-                        //Tolgo dalla cache, dovrà essere ricaricata
-                        memoryCache?.Remove(kJobsCacheKey);
-                        return Ok();
-                    }
+                    //Tolgo dalla cache, dovrà essere ricaricata
+                    memoryCache?.Remove(kJobsCacheKey);
+                    return Ok();
                 }
-                return NotFound();
+                else
+                {
+                    return NotFound();
+                }
             }
             catch (Exception ex)
             {
@@ -115,28 +106,25 @@ namespace Delineat.Assistant.API.Controllers
             try
             {
 
-                var stores = GetStores();
-                foreach (var store in stores)
-                {
-                    var validation = new DAModelValidator(store).Validate(job);
-                    if (validation.IsValid)
-                    {
-                        var result = store.Store(job);
-                        //Tolgo dalla cache, dovrà essere ricaricata
-                        memoryCache?.Remove(kJobsCacheKey);
-                        if (result.Stored)
-                            return job;
-                        else
-                            return BadRequest(result.ErrorMessages);
 
-                    }
+                var validation = new DAModelValidator(Store).Validate(job);
+                if (validation.IsValid)
+                {
+                    var result = Store.Store(job);
+                    //Tolgo dalla cache, dovrà essere ricaricata
+                    memoryCache?.Remove(kJobsCacheKey);
+                    if (result.Stored)
+                        return job;
                     else
-                    {
-                        return BadRequest(validation.Errors);
-                    }
+                        return BadRequest(result.ErrorMessages);
+
+                }
+                else
+                {
+                    return BadRequest(validation.Errors);
                 }
 
-                return NotFound();
+
             }
             catch (Exception ex)
             {
@@ -151,30 +139,25 @@ namespace Delineat.Assistant.API.Controllers
         {
             try
             {
-
-                var stores = GetStores();
-                foreach (var store in stores)
+                var validation = new DAModelValidator(Store).Validate(tag);
+                if (validation.IsValid)
                 {
-                    var validation = new DAModelValidator(store).Validate(tag);
-                    if (validation.IsValid)
-                    {
-                        var result = store.AddJobTag(jobId, tag);
-                        if (result.Stored)
-                            return tag;
-                        else
-                            return BadRequest(result.ErrorMessages);
-                    }
+                    var result = Store.AddJobTag(jobId, tag);
+                    if (result.Stored)
+                        return tag;
                     else
-                    {
-                        return BadRequest(validation.Errors);
-                    }
+                        return BadRequest(result.ErrorMessages);
                 }
-                return NotFound();
+                else
+                {
+                    return BadRequest(validation.Errors);
+                }
+
             }
             catch (Exception ex)
             {
                 return Problem(ex);
-            }           
+            }
         }
 
 
@@ -185,20 +168,16 @@ namespace Delineat.Assistant.API.Controllers
             try
             {
                 note.NoteType = NoteType.Job;
-                var stores = GetStores();
-                foreach (var store in stores)
+
+                var result = Store.AddNoteToJob(jobId, note);
+
+                if (result.Stored)
                 {
-                    var result = store.AddNoteToJob(jobId, note);
-
-                    if (result.Stored)
-                    {
-                        return note;
-                    }
-                    else
-                        return BadRequest(result.ErrorMessages);
+                    return note;
                 }
+                else
+                    return BadRequest(result.ErrorMessages);
 
-                return NotFound();
             }
             catch (Exception ex)
             {
@@ -211,18 +190,18 @@ namespace Delineat.Assistant.API.Controllers
         {
             try
             {
-                var stores = GetStores();
-                foreach (var store in stores)
-                {
-                    var job = store.GetJob(id);
-                    if (job != null)
-                    {
-                        var jobItems = store.GetJobItems(id);
 
-                        return jobItems.ToArray();
-                    }
+                var job = Store.GetJob(id);
+                if (job != null)
+                {
+                    var jobItems = Store.GetJobItems(id);
+
+                    return jobItems.ToArray();
                 }
-                return new DWItem[0];
+                else
+                {
+                    return new DWItem[0];
+                }
             }
             catch (Exception ex)
             {

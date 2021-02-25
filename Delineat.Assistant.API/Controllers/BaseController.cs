@@ -6,17 +6,10 @@ namespace Delineat.Assistant.API.Controllers
 {
     public class BaseController:ControllerBase
     {
-        protected readonly ILoggerFactory loggerFactory;
         protected readonly ILogger logger;
-        public BaseController(ILoggerFactory loggerFactory)
+        public BaseController(ILogger logger)
         {         
-            this.loggerFactory = loggerFactory;
-            this.logger = MakeLogger(loggerFactory);
-        }
-
-        protected virtual ILogger MakeLogger(ILoggerFactory loggerFactory)
-        {
-            return loggerFactory.CreateLogger<BaseController>();
+            this.logger = logger;        
         }
 
         protected ObjectResult Problem(Exception ex)

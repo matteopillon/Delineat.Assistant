@@ -1,10 +1,12 @@
 using Delineat.Assistant.API.Configuration;
 using Delineat.Assistant.API.Managers;
 using Delineat.Assistant.API.WorkerJobs;
+using Delineat.Assistant.Core.Interfaces;
 using Delineat.Assistant.Core.Stores.Configuration;
 using Delineat.Assistant.Core.Tips.Helpers;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -67,8 +69,8 @@ namespace Delineat.Assistant.API
 
                                 .ConfigureKestrel(options =>
                                 {
-                                options.Limits.MaxRequestBodySize = null;
-                                options.Limits.MaxRequestBufferSize = null;
+                                    options.Limits.MaxRequestBodySize = null;
+                                    options.Limits.MaxRequestBufferSize = null;
                                 });
                 });
 
@@ -178,12 +180,17 @@ namespace Delineat.Assistant.API
 
         private static void InitStores(IServiceProvider services)
         {
-            var storesOptions = services.GetService(typeof(IOptions<DAStoresConfiguration>)) as IOptions<DAStoresConfiguration>;
-            var loggerFactory = services.GetService(typeof(ILoggerFactory)) as ILoggerFactory;
-            if (storesOptions != null && loggerFactory != null)
+            using (var scope = services.CreateScope())
             {
+               
+                var storesOptions = scope.ServiceProvider.GetService<IOptions<DAStoresConfiguration>>();
+                var loggerFactory = scope.ServiceProvider.GetService<ILoggerFactory>();
+                var store = scope.ServiceProvider.GetService<IDAStore>();
+                if (storesOptions != null && loggerFactory != null)
+                {
 
-                new DAStoresManager(loggerFactory, storesOptions.Value).InitStores();
+                    new DAStoresManager(loggerFactory, storesOptions, store).InitStores();
+                }
             }
 
         }
@@ -191,46 +198,58 @@ namespace Delineat.Assistant.API
         private static void StartJobManager(IServiceProvider services)
         {
             DAJobsConfiguration jobsConfiguration = null;
-
-            var jobsOptions = services.GetService(typeof(IOptions<DAJobsConfiguration>)) as IOptions<DAJobsConfiguration>;
-            if (jobsOptions != null)
-                jobsConfiguration = jobsOptions.Value;
-
-            if (jobsConfiguration != null && !jobsConfiguration.Disabled)
+            using (var scope = services.CreateScope())
             {
-                ILoggerFactory loggerFactory = services.GetService(typeof(ILoggerFactory)) as ILoggerFactory;
-                double interval = 10000;
-                if (jobsConfiguration != null)
-                    interval = jobsConfiguration.Interval;
+
+                var jobsOptions = scope.ServiceProvider.GetService<IOptions<DAJobsConfiguration>>();
+                if (jobsOptions != null)
+                    jobsConfiguration = jobsOptions.Value;
+
+                if (jobsConfiguration != null && !jobsConfiguration.Disabled)
+                {
+                    ILoggerFactory loggerFactory = scope.ServiceProvider.GetService<ILoggerFactory>();
+                    double interval = 10000;
+                    if (jobsConfiguration != null)
+                        interval = jobsConfiguration.Interval;
 
 
 
-                jobService = new DAWorkersService(loggerFactory, interval);
+                    jobService = new DAWorkersService(loggerFactory, interval);
 
-                jobService.AddWorker(GetEmailNotifierWorker(services, loggerFactory));
+                    jobService.AddWorker(GetEmailNotifierWorker(services, loggerFactory));
 
-                jobService.AddWorker(GetCleanerWorker(services, jobsConfiguration, loggerFactory));
+                    jobService.AddWorker(GetCleanerWorker(services, jobsConfiguration, loggerFactory));
 
-                jobService.Start();
+                    jobService.Start();
+                }
             }
         }
 
         private static IDAWorkerJob GetCleanerWorker(IServiceProvider services, DAJobsConfiguration jobsConfiguration, ILoggerFactory loggerFactory)
         {
-            string sessionsPath = string.Empty;
-            var serverConfiguration = services.GetService(typeof(IOptions<DAServerConfiguration>)) as IOptions<DAServerConfiguration>;
+            using (var scope = services.CreateScope())
+            {
 
-            if (serverConfiguration != null)
-                sessionsPath = serverConfiguration.Value.SessionsPath;
+                string sessionsPath = string.Empty;
+                var serverConfiguration = scope.ServiceProvider.GetService<IOptions<DAServerConfiguration>>();
 
-            return new DACleanerJob(sessionsPath, jobsConfiguration.CleanDays, loggerFactory);
+                if (serverConfiguration != null)
+                    sessionsPath = serverConfiguration.Value.SessionsPath;
+
+                return new DACleanerJob(sessionsPath, jobsConfiguration.CleanDays, loggerFactory);
+            }
         }
 
         private static IDAWorkerJob GetEmailNotifierWorker(IServiceProvider services, ILoggerFactory loggerFactory)
         {
-            var storesConfiguration = services.GetService(typeof(IOptions<DAStoresConfiguration>)) as IOptions<DAStoresConfiguration>;
-            var emailConfiguration = services.GetService(typeof(IOptions<DAEmailConfiguration>)) as IOptions<DAEmailConfiguration>;
-            return new DANoteNotifierJob(storesConfiguration.Value, emailConfiguration.Value, loggerFactory);
+            using (var scope = services.CreateScope())
+            {
+
+                var storesConfiguration = scope.ServiceProvider.GetService<IOptions<DAStoresConfiguration>>();
+                var emailConfiguration = scope.ServiceProvider.GetService<IOptions<DAEmailConfiguration>>();
+                var store = scope.ServiceProvider.GetService(typeof(IDAStore)) as IDAStore;
+                return new DANoteNotifierJob(storesConfiguration, emailConfiguration, loggerFactory, store);
+            }
         }
 
     }

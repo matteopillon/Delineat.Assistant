@@ -2,7 +2,7 @@
 using Delineat.Assistant.API.Managers;
 using Delineat.Assistant.API.Models.Results;
 using Delineat.Assistant.Core.Helpers;
-using Delineat.Assistant.Core.Stores.Configuration;
+using Delineat.Assistant.Core.Interfaces;
 using Delineat.Assistant.Core.Tips;
 using Delineat.Assistant.Core.Tips.Email;
 using Delineat.Assistant.Core.Tips.Email.EML;
@@ -11,14 +11,12 @@ using Delineat.Assistant.Core.Tips.Interfaces;
 using Delineat.Assistant.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Threading.Tasks;
 
 namespace Delineat.Assistant.API.Controllers
 {
@@ -28,26 +26,21 @@ namespace Delineat.Assistant.API.Controllers
     {
         private readonly DAServerConfiguration serverConfiguration = new DAServerConfiguration();
 
-        public FilesController(IOptions<DAStoresConfiguration> storesConfiguration, IOptions<DAServerConfiguration> serverConfigurationOptions, ILoggerFactory loggerFactory) : base(storesConfiguration, loggerFactory)
+        public FilesController(IDAStore store, IOptions<DAServerConfiguration> serverConfigurationOptions, ILogger<FilesController> logger) : base(store, logger)
         {
             if (serverConfigurationOptions != null)
                 serverConfiguration = serverConfigurationOptions.Value;
-        }
-
-        protected override ILogger MakeLogger(ILoggerFactory loggerFactory)
-        {
-            return loggerFactory.CreateLogger<FilesController>();
-        }
+        }     
 
         [HttpPost("upload")]
         [DisableRequestSizeLimit]
-        public  DAUploadResult Upload(IFormFile file)
+        public DAUploadResult Upload(IFormFile file)
         {
             var result = new DAUploadResult();
 
 
             var fileName = Path.GetFileName(file.FileName);
-           
+
             using (var fs = file.OpenReadStream())
             {
                 DALoadingSessionManager sessionManager = new DALoadingSessionManager(serverConfiguration.SessionsPath, logger);

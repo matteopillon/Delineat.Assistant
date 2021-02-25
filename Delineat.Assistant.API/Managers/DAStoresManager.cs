@@ -2,6 +2,7 @@
 using Delineat.Assistant.Core.Stores;
 using Delineat.Assistant.Core.Stores.Configuration;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using System.Collections.Generic;
 
 namespace Delineat.Assistant.API.Managers
@@ -10,29 +11,17 @@ namespace Delineat.Assistant.API.Managers
     public class DAStoresManager
     {
 
-        public DAStoresManager(ILoggerFactory loggerFactory, DAStoresConfiguration storeConfiguration)
+        public DAStoresManager(ILoggerFactory loggerFactory, IOptions<DAStoresConfiguration> storeConfiguration, IDAStore store)
         {
             this.logger = loggerFactory.CreateLogger<DAStoresManager>();
-            this.configuration = storeConfiguration;
+            this.store = store;
+            this.configuration = storeConfiguration.Value;
         }
 
         private List<IDAStore> cachedStores = new List<IDAStore>();
         private readonly ILogger logger;
+        private readonly IDAStore store;
         private readonly DAStoresConfiguration configuration;
-
-        public List<IDAStore> GetStores()
-        {
-            lock (cachedStores)
-            {
-                if (cachedStores != null && cachedStores.Count == 0)
-                {
-                    var storeFactory = new Core.Stores.Factories.DAConfigurationStoresFactory(configuration,logger);
-                    cachedStores = storeFactory.CreateStores();
-
-                }
-            }
-            return cachedStores;
-        }
 
         internal void ClearCache()
         {
@@ -42,22 +31,18 @@ namespace Delineat.Assistant.API.Managers
         public void InitStores()
         {
             logger.LogTrace("Inizializzazione stores");
-            var stores = GetStores();
-            foreach (var store in stores)
-            {
-                store.InitStore();
-            }
+
+            store.InitStore();
+
             SyncStores();
         }
 
         public void SyncStores()
         {
-            var stores = GetStores();
-            foreach (var store in stores)
-            {
-                var syncManager = new DAStoreSyncManager(store, logger);
-                syncManager.SyncFromSource();
-            }
+
+            var syncManager = new DAStoreSyncManager(store, logger);
+            syncManager.SyncFromSource();
+
         }
     }
 }

@@ -1,40 +1,27 @@
 ﻿{
   "Stores": [
     {
-      "name": "ArchivioDB",
-      "description": "ArchivioDB",
-      "storeTypeName": "Delineat.Assistant.Core.Stores.DADBFolderStore, Delineat.Assistant.Core.Stores",
+      "name": "Archivio2021",
+      "description": "Archivio 2021",
+      "storeTypeName": "Delineat.Assistant.Core.Stores.DAFileFolderStore, Delineat.Assistant.Core.Stores",
       "settings": [
         {
-          "key": "connectionString",
-          "value": "Server=tcp:mpsqltestserver.database.windows.net,1433;Initial Catalog=delineat;Persist Security Info=False;User ID=matteopillon;Password=Rastafar1SQL80;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;"
+          "key": "rootDirectoryPath",
+          "value": "DATI\\ARCHIVIO_2021"
         }
-      ],
-      "syncStores": [
+      ]
+    },
+    {
+      "name": "Archivio2020",
+      "description": "Archivio 2020",
+      "storeTypeName": "Delineat.Assistant.Core.Stores.DAFileFolderStore, Delineat.Assistant.Core.Stores",
+      "settings": [
         {
-          "name": "Archivio2021",
-          "description": "Archivio 2021",
-          "storeTypeName": "Delineat.Assistant.Core.Stores.DAFileFolderStore, Delineat.Assistant.Core.Stores",
-          "settings": [
-            {
-              "key": "rootDirectoryPath",
-              "value": "DATI\\ARCHIVIO_2021"
-            }
-          ]
-        },
-        {
-          "name": "Archivio2020",
-          "description": "Archivio 2020",
-          "storeTypeName": "Delineat.Assistant.Core.Stores.DAFileFolderStore, Delineat.Assistant.Core.Stores",
-          "settings": [
-            {
-              "key": "rootDirectoryPath",
-              "value": "DATI\\ARCHIVIO_2020"
-            }
-          ]
+          "key": "rootDirectoryPath",
+          "value": "DATI\\ARCHIVIO_2020"
         }
-
       ]
     }
+
   ]
 }

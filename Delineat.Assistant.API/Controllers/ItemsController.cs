@@ -1,6 +1,7 @@
 ﻿using Delineat.Assistant.API.Configuration;
 using Delineat.Assistant.API.Models;
 using Delineat.Assistant.API.Validators;
+using Delineat.Assistant.Core.Interfaces;
 using Delineat.Assistant.Core.Stores.Configuration;
 using Delineat.Assistant.Core.Stores.Exceptions;
 using Delineat.Assistant.Models;
@@ -20,16 +21,11 @@ namespace Delineat.Assistant.API.Controllers
     {
         private readonly DAServerConfiguration serverConfiguration = new DAServerConfiguration();
 
-        public ItemsController(Microsoft.Extensions.Options.IOptions<DAStoresConfiguration> storesConfiguration,
-            IOptions<DAServerConfiguration> serverConfigurationOptions, ILoggerFactory loggerFactory) : base(storesConfiguration, loggerFactory)
+        public ItemsController(IDAStore store,
+            IOptions<DAServerConfiguration> serverConfigurationOptions, ILogger<ItemsController> logger) : base(store, logger)
         {
             if (serverConfigurationOptions != null)
                 serverConfiguration = serverConfigurationOptions.Value;
-        }
-
-        protected override ILogger MakeLogger(ILoggerFactory loggerFactory)
-        {
-            return loggerFactory.CreateLogger<ItemsController>();
         }
 
 
@@ -39,34 +35,28 @@ namespace Delineat.Assistant.API.Controllers
 
             try
             {
-                var stores = GetStores();
-                foreach (var store in stores)
+                var storeInfo = Store.DeleteItem(id);
+                if (storeInfo.Stored)
                 {
-                    try
-                    {
-                        var storeInfo = store.DeleteItem(id);
-                        if (storeInfo.Stored)
-                        {
-                            return Ok();
-                        }
-
-                    }
-                    catch (DAJobNotFoundInStoreException)
-                    {
-                        if (stores.Last() == store)
-                            return NotFound();
-                    }
-                    catch
-                    {
-                        throw;
-                    }
+                    return Ok();
                 }
+                else
+                {
+                    return NotFound();
+                }
+
+            }
+            catch (DAJobNotFoundInStoreException)
+            {
                 return NotFound();
             }
             catch (Exception ex)
             {
                 return Problem(ex);
             }
+
+
+
         }
 
 
@@ -74,37 +64,31 @@ namespace Delineat.Assistant.API.Controllers
         public ActionResult DeleteItemTag(int itemId, int id)
         {
 
+
             try
             {
-                var stores = GetStores();
-                foreach (var store in stores)
+                var storeInfo = Store.RemoveItemTag(itemId, id);
+
+                if (storeInfo.Stored)
                 {
-                    try
-                    {
-                        var storeInfo = store.RemoveItemTag(itemId, id);
-
-                        if (storeInfo.Stored)
-                        {
-                            return Ok();
-                        }
-                    }
-                    catch (DAJobNotFoundInStoreException)
-                    {
-                        if (stores.Last() == store)
-                            return NotFound();
-                    }
-                    catch
-                    {
-                        throw;
-                    }
-
+                    return Ok();
                 }
+                else
+                {
+                    return NotFound();
+                }
+            }
+            catch (DAJobNotFoundInStoreException)
+            {
+
                 return NotFound();
             }
             catch (Exception ex)
             {
                 return Problem(ex);
             }
+
+
         }
 
         [HttpPost("{id}/tags")]
@@ -112,30 +96,27 @@ namespace Delineat.Assistant.API.Controllers
         {
             try
             {
-                var stores = GetStores();
-                foreach (var store in stores)
-                {
-                    DAValidationResult validation = null;
-                    foreach (var tag in tags)
-                    {
-                        validation = new DAModelValidator(store).Validate(tag);
-                        if (!validation.IsValid) break;
-                    }
 
-                    if (validation.IsValid)
-                    {
-                        var result = store.AddItemTags(id, tags);
-                        if (result.Stored)
-                            return result.Data;
-                        else
-                            return StatusCode(StatusCodes.Status500InternalServerError, result.ErrorMessages);
-                    }
-                    else
-                    {
-                        return BadRequest(validation.Errors);
-                    }
+                DAValidationResult validation = null;
+                foreach (var tag in tags)
+                {
+                    validation = new DAModelValidator(Store).Validate(tag);
+                    if (!validation.IsValid) break;
                 }
-                return NotFound();
+
+                if (validation.IsValid)
+                {
+                    var result = Store.AddItemTags(id, tags);
+                    if (result.Stored)
+                        return result.Data;
+                    else
+                        return StatusCode(StatusCodes.Status500InternalServerError, result.ErrorMessages);
+                }
+                else
+                {
+                    return BadRequest(validation.Errors);
+                }
+
             }
             catch (Exception ex)
             {
@@ -150,21 +131,17 @@ namespace Delineat.Assistant.API.Controllers
             try
             {
                 note.NoteType = NoteType.Item;
-                var stores = GetStores();
-                foreach (var store in stores)
+
+                var result = Store.AddNoteToItem(id, note);
+                if (result.Stored)
                 {
-                    var result = store.AddNoteToItem(id, note);
-                    if (result.Stored)
-                    {
-                        return Ok();                      
-                    }
-                    else
-                    {
-                        return BadRequest(result.ErrorMessages);
-                    }
+                    return Ok();
+                }
+                else
+                {
+                    return BadRequest(result.ErrorMessages);
                 }
 
-                return NotFound();
             }
             catch (Exception ex)
             {
@@ -179,25 +156,22 @@ namespace Delineat.Assistant.API.Controllers
             try
             {
 
-                var stores = GetStores();
-                foreach (var store in stores)
-                {
-                    DAValidationResult validation = new DAModelValidator(store).Validate(log);
 
-                    if (validation.IsValid)
-                    {
-                        var result = store.AddWorkLogToItem(id, log);
-                        if (result.Stored)
-                            return result.Data;
-                        else
-                            return StatusCode(StatusCodes.Status500InternalServerError, result.ErrorMessages);                      
-                    }
+                DAValidationResult validation = new DAModelValidator(Store).Validate(log);
+
+                if (validation.IsValid)
+                {
+                    var result = Store.AddWorkLogToItem(id, log);
+                    if (result.Stored)
+                        return result.Data;
                     else
-                    {
-                        return BadRequest(validation.Errors);
-                    }
+                        return StatusCode(StatusCodes.Status500InternalServerError, result.ErrorMessages);
                 }
-                return NotFound();
+                else
+                {
+                    return BadRequest(validation.Errors);
+                }
+
             }
             catch (Exception ex)
             {
@@ -227,51 +201,41 @@ namespace Delineat.Assistant.API.Controllers
                 note.NoteType = NoteType.Item;
                 note.InsertDate = DateTime.Now;
             }
+
+
             try
             {
-                var stores = GetStores();
-                foreach (var store in stores)
+                var job = Store.GetJob(request.Item.JobId);
+                var storeInfo = Store.Store(request.Item, job);
+
+                int itemId = storeInfo.Data;
+                DWItem itemDetail = null;
+                if (itemId > 0)
                 {
-                    try
-                    {
-                        var job = store.GetJob(request.Item.JobId);
-                        var storeInfo = store.Store(request.Item, job);
-
-                        int itemId = storeInfo.Data;
-                        DWItem itemDetail = null;
-                        if (itemId > 0)
-                        {
-                            itemDetail = store.GetItem(itemId);
-                        }
-
-                        if (storeInfo.Stored)
-                        {
-                            return itemDetail;
-                        }
-                        else
-                        {
-                            return StatusCode(StatusCodes.Status500InternalServerError, storeInfo.ErrorMessages);
-                        }
-                     
-                    }
-                    catch (DAJobNotFoundInStoreException ex)
-                    {
-                        if (stores.Last() == store)
-                            return NotFound();
-                    }
-                    catch
-                    {
-                        throw;
-                    }
-
+                    itemDetail = Store.GetItem(itemId);
                 }
+
+                if (storeInfo.Stored)
+                {
+                    return itemDetail;
+                }
+                else
+                {
+                    return StatusCode(StatusCodes.Status500InternalServerError, storeInfo.ErrorMessages);
+                }
+
+            }
+            catch (DAJobNotFoundInStoreException ex)
+            {
+
                 return NotFound();
             }
             catch (Exception ex)
             {
-               return Problem(ex);
+                return Problem(ex);
             }
-           
+
+
         }
     }
 }

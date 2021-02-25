@@ -15,14 +15,9 @@ namespace Delineat.Assistant.API.Controllers
     {
         private readonly IDAUsersStore usersStore;
 
-        public UsersController(ILoggerFactory loggerFactory, IDAUsersStore usersStore) : base(loggerFactory)
+        public UsersController(ILogger<UsersController> logger, IDAUsersStore usersStore) : base(logger)
         {
             this.usersStore = usersStore;
-        }
-
-        protected override ILogger MakeLogger(ILoggerFactory loggerFactory)
-        {
-            return loggerFactory.CreateLogger<UsersController>();
         }
 
         [HttpGet]

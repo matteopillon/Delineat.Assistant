@@ -1,4 +1,6 @@
-﻿using Delineat.Assistant.Core.Data;
+﻿using Delineat.Assistant.API.Helpers;
+using Delineat.Assistant.API.Models.Results;
+using Delineat.Assistant.Core.Data;
 using Delineat.Assistant.Core.Data.Models;
 using Delineat.Assistant.Core.ObjectFactories;
 using Delineat.Assistant.Models;
@@ -7,7 +9,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Linq;
-
 namespace Delineat.Assistant.API.Controllers
 {
     [Route("api/[controller]")]
@@ -18,16 +19,11 @@ namespace Delineat.Assistant.API.Controllers
         private readonly DADataObjectFactory dataObjectFactory;
         private readonly DAAssistantDBContext assistantDBContext;
 
-        public DayWorkLogsController(DAAssistantDBContext assistantDBContext, ILoggerFactory loggerFactory) : base(loggerFactory)
+        public DayWorkLogsController(DAAssistantDBContext assistantDBContext, ILogger<DayWorkLogsController> logger) : base(logger)
         {
             this.dwObjectFactory = new DADWObjectFactory(assistantDBContext);
             this.dataObjectFactory = new DADataObjectFactory();
             this.assistantDBContext = assistantDBContext;
-        }
-
-        protected override ILogger MakeLogger(ILoggerFactory loggerFactory)
-        {
-            return loggerFactory.CreateLogger<DayWorkLogsController>();
         }
 
 
@@ -42,7 +38,7 @@ namespace Delineat.Assistant.API.Controllers
         private IQueryable<DayWorkLog> MakeDayWorkLogsQueryWithDateRange(DateTime startDate, DateTime endDate)
         {
             return MakeDayWorkLogsQuery()
-                .Where(d => d.Date >= startDate && d.Date <= endDate);
+                .Where(d => d.Date.Date >= startDate && d.Date.Date <= endDate);
         }
 
         [HttpGet()]
@@ -79,28 +75,75 @@ namespace Delineat.Assistant.API.Controllers
             }
         }
 
+
+
+        private DayWorkLog FillDayWorkLogFromRequest(DayWorkLog log, DayWorkLogRequest data)
+        {
+            if (data.Date.Kind == DateTimeKind.Utc)
+            {
+                log.Date = data.Date.ToLocalTime().Date;
+            }
+            else
+            {
+                log.Date = data.Date;
+            }
+
+            log.Job = assistantDBContext.GetJob(data.JobId);
+            log.Minutes = data.Minutes;
+            log.SubJob = data.SubJobId > 0 ? assistantDBContext.GetSubJob(data.SubJobId) : null;
+            log.User = assistantDBContext.GetUser(data.UserId);
+            log.WorkType = assistantDBContext.GetDayWorkType(data.DayWorkTypeId);
+            log.Note = data.Note;
+
+            return log;
+        }
+
+        private bool Validate(DayWorkLog log)
+        {
+            if (log == null) ModelState.AddModelError(nameof(log), "DayWorkLog non trovato");
+            if (log.Job == null) ModelState.AddModelError(nameof(log.Job), "Commessa non trovata");
+            if (log.User == null) ModelState.AddModelError(nameof(log.User), "Utente non trovato");
+            if (log.Minutes <= 0) ModelState.AddModelError(nameof(log.Minutes), "Le ore devono essere valorizzate");
+            if (log.WorkType == null) ModelState.AddModelError(nameof(log.SubJob), "Il tipo di registrazione deve essere valorizzato");
+            if (log.SubJob?.Job != null && log.Job != null && log.Job.JobId != log.SubJob.Job.JobId) ModelState.AddModelError(nameof(log.SubJob), $"La sotto commessa {log.SubJob.Description} non appartiene alla commessa {log.Job.Description}");
+            return ModelState.IsValid;
+        }
+
+        private bool Validate(DayWorkLogRequest data)
+        {
+            if (data == null) ModelState.AddModelError(nameof(data), "WorkLog non valorizzato");
+            if (data.JobId == 0) ModelState.AddModelError(nameof(data.JobId), "Commessa non valorizzata");
+            if (data.UserId == 0) ModelState.AddModelError(nameof(data.UserId), "Utente non valorizzato");
+            if (data.Minutes <= 0) ModelState.AddModelError(nameof(data.Minutes), "Le ore devono essere valorizzate");
+            if (data.DayWorkTypeId == 0) ModelState.AddModelError(nameof(data.DayWorkTypeId), "Il tipo di registrazione deve essere valorizzato");
+
+            return ModelState.IsValid;
+        }
+
         [HttpPut()]
-        public ActionResult<DWDayWorkLog> UpInsertWorkLog(DWDayWorkLog workLog)
+        public ActionResult<DWDayWorkLog> UpdateWorkLog(int id, DayWorkLogRequest data)
         {
             try
             {
-                if (workLog == null) return BadRequest("WorkLog non valorizzato");
-                if (workLog.Job == null) return BadRequest("Commessa non valorizzata");
-                if (workLog.User == null) return BadRequest("Utente non valorizzato");
-                if (workLog.Minutes <= 0) return BadRequest("Le ore devono essere valorizzate");
-
-                var saveWorkLog = dataObjectFactory.GetDBDayWorkLog(workLog);
-                if (saveWorkLog.Job != null) assistantDBContext.Attach(saveWorkLog.Job);
-                if (saveWorkLog.User != null) assistantDBContext.Attach(saveWorkLog.User);
-                if (saveWorkLog.WorkType != null) assistantDBContext.Attach(saveWorkLog.WorkType);
-                if (saveWorkLog.SubJob != null) assistantDBContext.Attach(saveWorkLog.SubJob);
-
-                if (workLog.DayWorkLogId > 0)
+                if (Validate(data))
                 {
-                    var worklog = assistantDBContext.DayWorkLogs.FirstOrDefault(w => w.DayWorkLogId == workLog.DayWorkLogId);
-                    if (worklog != null)
+
+                    var log = assistantDBContext.DayWorkLogs.FirstOrDefault(l => l.DayWorkLogId == id);
+
+                    if (log != null)
                     {
-                        assistantDBContext.DayWorkLogs.Update(saveWorkLog);
+                        if (Validate(FillDayWorkLogFromRequest(log, data)))
+                        {
+
+                            assistantDBContext.DayWorkLogs.Update(log);
+                            assistantDBContext.SaveChanges();
+
+                            return dwObjectFactory.GetDWDayWorkLog(log);
+                        }
+                        else
+                        {
+                            return BadRequest(ModelState);
+                        }
                     }
                     else
                     {
@@ -109,12 +152,46 @@ namespace Delineat.Assistant.API.Controllers
                 }
                 else
                 {
-                    assistantDBContext.DayWorkLogs.Add(saveWorkLog);
+                    return BadRequest(ModelState);
                 }
 
-                assistantDBContext.SaveChanges();
 
-                return dwObjectFactory.GetDWDayWorkLog(saveWorkLog);
+            }
+            catch (Exception ex)
+            {
+                return Problem(ex);
+            }
+        }
+
+        [HttpPost()]
+        public ActionResult<DWDayWorkLog> InsertWorkLog(DayWorkLogRequest data)
+        {
+            try
+            {
+                if (Validate(data))
+                {
+
+                    var log = new DayWorkLog();
+                    if (Validate(FillDayWorkLogFromRequest(log, data)))
+                    {
+
+                        assistantDBContext.DayWorkLogs.Add(log);
+                        assistantDBContext.SaveChanges();
+
+                        return CreatedAtAction(nameof(GetWorkLog), new { id = log.DayWorkLogId }, dwObjectFactory.GetDWDayWorkLog(log));
+                    }
+                    else
+                    {
+                        return BadRequest(ModelState);
+                    }
+
+                }
+                else
+                {
+                    return BadRequest(ModelState);
+                }
+
+
             }
             catch (Exception ex)
             {

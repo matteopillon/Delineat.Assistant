@@ -1,6 +1,7 @@
 ﻿using Delineat.Assistant.API.Configuration;
 using Delineat.Assistant.API.Models;
 using Delineat.Assistant.API.Validators;
+using Delineat.Assistant.Core.Interfaces;
 using Delineat.Assistant.Core.Stores.Configuration;
 using Delineat.Assistant.Core.Stores.Exceptions;
 using Delineat.Assistant.Models;
@@ -22,16 +23,11 @@ namespace Delineat.Assistant.API.Controllers
     {
         private readonly DAServerConfiguration serverConfiguration = new DAServerConfiguration();
 
-        public DocumentVersionsController(Microsoft.Extensions.Options.IOptions<DAStoresConfiguration> storesConfiguration,
-            IOptions<DAServerConfiguration> serverConfigurationOptions, ILoggerFactory loggerFactory) : base(storesConfiguration, loggerFactory)
+        public DocumentVersionsController(IDAStore store,
+            IOptions<DAServerConfiguration> serverConfigurationOptions, ILogger<DocumentVersionsController> logger) : base(store, logger)
         {
             if (serverConfigurationOptions != null)
                 serverConfiguration = serverConfigurationOptions.Value;
-        }
-
-        protected override ILogger MakeLogger(ILoggerFactory loggerFactory)
-        {
-            return loggerFactory.CreateLogger<DocumentVersionsController>();
         }
 
         [HttpGet("{id}")]
@@ -40,22 +36,24 @@ namespace Delineat.Assistant.API.Controllers
             try
             {
                 var stream = new MemoryStream();
-                var stores = GetStores();
 
-                foreach (var store in stores)
+                byte[] documentVersion = Store.GetDocumentVersionData(id);
+                if (documentVersion != null)
                 {
-                    byte[] documentVersion = store.GetDocumentVersionData(id);
                     stream = new MemoryStream(documentVersion);
                     return this.File(stream, "application/octet-stream");
                 }
-
+                else
+                {
+                    return NotFound();
+                }
 
             }
             catch (Exception ex)
             {
                 return Problem(ex);
             }
-            return NotFound();
+
         }
 
         [HttpGet("{id}/path")]
@@ -63,21 +61,22 @@ namespace Delineat.Assistant.API.Controllers
         {
             try
             {
-                var stores = GetStores();
 
-                foreach (var store in stores)
+                var documentVersionPath = Store.GetDocumentVersionPath(id);
+                if (!string.IsNullOrWhiteSpace(documentVersionPath))
                 {
-                    var documentVersionPath = store.GetDocumentVersionPath(id);
                     return documentVersionPath;
                 }
-
+                else
+                {
+                    return NotFound();
+                }
 
             }
             catch (Exception ex)
             {
                 return Problem(ex);
             }
-            return NotFound();
         }
 
 
@@ -132,29 +131,27 @@ namespace Delineat.Assistant.API.Controllers
 
             try
             {
+                var docVersion = Store.GetDocumentVersion(id);
 
-                var stores = GetStores();
-                foreach (var store in stores)
+                if (docVersion != null)
                 {
-                    var docVersion = store.GetDocumentVersion(id);
-
-                    if (docVersion != null)
-                    {
-                        setValuesAction(docVersion);
-                        var result = store.UpdateDocumentVersion(docVersion);
-                        if (result.Stored)
-                            return result.Data;
-                        else
-                            return StatusCode(StatusCodes.Status500InternalServerError, result.ErrorMessages);                       
-                    }                    
+                    setValuesAction(docVersion);
+                    var result = Store.UpdateDocumentVersion(docVersion);
+                    if (result.Stored)
+                        return result.Data;
+                    else
+                        return StatusCode(StatusCodes.Status500InternalServerError, result.ErrorMessages);
                 }
-                return NotFound();
+                else
+                {
+                    return NotFound();
+                }
             }
             catch (Exception ex)
             {
                 return Problem(ex);
             }
-           
+
         }
 
     }

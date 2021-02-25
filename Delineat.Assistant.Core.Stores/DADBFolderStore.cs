@@ -1,7 +1,8 @@
 ﻿using Delineat.Assistant.Core.Data;
-using Delineat.Assistant.Core.Interfaces;
-using Delineat.Assistant.Core.Stores.Factories;
 using Delineat.Assistant.Core.Data.Models;
+using Delineat.Assistant.Core.Interfaces;
+using Delineat.Assistant.Core.ObjectFactories;
+using Delineat.Assistant.Core.Stores.Factories;
 using Delineat.Assistant.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -9,12 +10,12 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Delineat.Assistant.Core.ObjectFactories;
 
 namespace Delineat.Assistant.Core.Stores
 {
-    public class DADBFolderStore : IDAStore, IDisposable
+    public class DADBFolderStore : IDAStore
     {
+        private readonly ILogger<DADBFolderStore> logger;
         private DAAssistantDBContext dataContext;
         private DADWObjectFactory dwObjectFactory;
         private DADataObjectFactory dataObjectFactory;
@@ -28,34 +29,20 @@ namespace Delineat.Assistant.Core.Stores
         public Dictionary<string, string> settings = new Dictionary<string, string>();
 
 
-        public DADBFolderStore(ILogger logger)
+        public DADBFolderStore(ILogger<DADBFolderStore> logger,DAAssistantDBContext dataContext)
         {
             this.logger = logger;
+            this.dataContext = dataContext;
+            this.dataObjectFactory = new DADataObjectFactory();
+            this.dwObjectFactory = new DADWObjectFactory(dataContext);
         }
 
-        public DAAssistantDBContext Context
-        {
-            get
-            {
-                lock (settings)
-                {
-                    if (dataContext == null)
-                    {
-                        var connectionString = settings["connectionString"];
-                        dataContext = new DAAssistantDBContext(connectionString);
-                        dataObjectFactory = new DADataObjectFactory();
-                        dwObjectFactory = new DADWObjectFactory(dataContext);
-                    }
-                }
-                return dataContext;
-            }
-        }
 
         public List<IDASyncStore> SyncStores { get; set; }
 
         public bool InitStore()
         {
-            Context.Database.Migrate();
+            dataContext.Database.Migrate();
             return true;
 
         }
@@ -65,7 +52,7 @@ namespace Delineat.Assistant.Core.Stores
             var foundJob = GetExistingJob(job);
             if (foundJob == null)
             {
-                Context.Jobs.Add(dataObjectFactory.GetDBJob(job));
+                dataContext.Jobs.Add(dataObjectFactory.GetDBJob(job));
             }
             else
             {
@@ -77,7 +64,7 @@ namespace Delineat.Assistant.Core.Stores
 
         private IQueryable<Job> GetJobsQuery()
         {
-            return Context.Jobs
+            return dataContext.Jobs
                 .Include(j => j.Group)
                 .Include(j => j.Topics)
                 .Include(j => j.Customer)
@@ -94,7 +81,7 @@ namespace Delineat.Assistant.Core.Stores
 
         private Item GetItemFromId(int itemId)
         {
-            var dbItem = Context.Items.Include(i => i.Tags).ThenInclude(dt => dt.Tag)
+            var dbItem = dataContext.Items.Include(i => i.Tags).ThenInclude(dt => dt.Tag)
                             .Include(d => d.Topics).ThenInclude(it => it.Topic)
                             .Include(d => d.WorkLogs).ThenInclude(wl => wl.WorkLog)
                             .Include(d => d.Job).ThenInclude(i => i.Group).FirstOrDefault(d => d.ItemId == itemId);
@@ -103,7 +90,7 @@ namespace Delineat.Assistant.Core.Stores
 
         private Item GetItemDetailFromId(int itemId)
         {
-            return Context.Items
+            return dataContext.Items
                   .Include(i => i.Notes).ThenInclude(n => n.Note).ThenInclude(n => n.NotesReminderRecipients)
                   .Include(i => i.Notes).ThenInclude(n => n.Note).ThenInclude(n => n.Topics).ThenInclude(t => t.Topic)
                   .Include(i => i.Documents).ThenInclude(d => d.Versions).ThenInclude(v => v.Thumbnails)
@@ -115,7 +102,7 @@ namespace Delineat.Assistant.Core.Stores
 
         private Document GetDocumentFromId(int documentId)
         {
-            var dbDocument = Context.Documents.Include(d => d.Tags).ThenInclude(dt => dt.Tag)
+            var dbDocument = dataContext.Documents.Include(d => d.Tags).ThenInclude(dt => dt.Tag)
                             .Include(d => d.Versions)
                             .Include(d => d.Item).ThenInclude(i => i.Job).ThenInclude(j => j.Group).FirstOrDefault(d => d.DocumentId == documentId);
             return dbDocument;
@@ -123,7 +110,7 @@ namespace Delineat.Assistant.Core.Stores
 
         private WorkLog GetWorkLogFromId(int workLogId)
         {
-            var dbWorkLog = Context.WorkLogs.FirstOrDefault(d => d.WorkLogId == workLogId);
+            var dbWorkLog = dataContext.WorkLogs.FirstOrDefault(d => d.WorkLogId == workLogId);
             return dbWorkLog;
         }
 
@@ -172,7 +159,7 @@ namespace Delineat.Assistant.Core.Stores
             try
             {
                 List<DWItem> items = new List<DWItem>();
-                foreach (var item in Context.Items
+                foreach (var item in dataContext.Items
                     .Include(i => i.Notes).ThenInclude(n => n.Note).ThenInclude(n => n.NotesReminderRecipients)
                     .Include(i => i.Notes).ThenInclude(n => n.Note).ThenInclude(n => n.Topics).ThenInclude(t => t.Topic)
                     .Include(i => i.Documents).ThenInclude(d => d.Versions).ThenInclude(v => v.Thumbnails)
@@ -198,7 +185,7 @@ namespace Delineat.Assistant.Core.Stores
             try
             {
                 List<DWNote> notes = new List<DWNote>();
-                foreach (var note in Context.Notes
+                foreach (var note in dataContext.Notes
                     .Include(n => n.NotesReminderRecipients)
                     .Include(n => n.Topics).ThenInclude(t => t.Topic)
                     .Include(n => n.Jobs)
@@ -226,7 +213,7 @@ namespace Delineat.Assistant.Core.Stores
                 job.Path = Trim(jobFactory.CreateFolderNameFromJob(dwObjectFactory.GetDWJob(job)));
                 saveChanges = true;
             }
-            if (saveChanges) Context.SaveChanges();
+            if (saveChanges) dataContext.SaveChanges();
 
             return jobs.Select(j => dwObjectFactory.GetDWJob(j)).ToList();
         }
@@ -253,7 +240,7 @@ namespace Delineat.Assistant.Core.Stores
 
                     job.Tags.Add(jobTags);
 
-                    Context.SaveChanges(true);
+                    dataContext.SaveChanges(true);
                     tag.TagId = dbTag.TagId;
                 }
                 else
@@ -273,7 +260,7 @@ namespace Delineat.Assistant.Core.Stores
 
         private Tag GetExistingTag(string description)
         {
-            var tag = Context.Tags.Where(t => t.Description == description).FirstOrDefault();
+            var tag = dataContext.Tags.Where(t => t.Description == description).FirstOrDefault();
             return tag;
         }
 
@@ -285,7 +272,7 @@ namespace Delineat.Assistant.Core.Stores
                 dbTag = new Tag();
                 dbTag.Description = description;
                 dbTag.InsertDate = DateTime.Now;
-                Context.Tags.Add(dbTag);
+                dataContext.Tags.Add(dbTag);
             }
             return dbTag;
         }
@@ -304,7 +291,7 @@ namespace Delineat.Assistant.Core.Stores
                         Note = dbNote,
                         Job = job
                     });
-                    Context.SaveChanges(true);
+                    dataContext.SaveChanges(true);
                 }
                 else
                 {
@@ -336,7 +323,7 @@ namespace Delineat.Assistant.Core.Stores
                         Note = dbNote,
                         Item = item
                     });
-                    Context.SaveChanges(true);
+                    dataContext.SaveChanges(true);
                 }
                 else
                 {
@@ -355,7 +342,7 @@ namespace Delineat.Assistant.Core.Stores
 
         private int SaveChangesAndSync()
         {
-            return Context.SaveChanges(true);
+            return dataContext.SaveChanges(true);
         }
 
         public DWStoreInfo Store(DWTopic topic)
@@ -372,7 +359,7 @@ namespace Delineat.Assistant.Core.Stores
                 if (topic.TopicId == 0)
                 {
                     dbTopic = dataObjectFactory.GetDBTopic(topic);
-                    Context.Add(dbTopic);
+                    dataContext.Add(dbTopic);
                 }
                 else
                 {
@@ -415,11 +402,11 @@ namespace Delineat.Assistant.Core.Stores
                 Job dbJob = null;
                 if (job.JobId == 0)
                 {
-                    var context = this.Context;
+                    var context = this.dataContext;
                     dbJob = dataObjectFactory.GetDBJob(job);
 
                     dbJob.Group = AssertCurrentGroup();
-                    Context.Add(dbJob);
+                    dataContext.Add(dbJob);
                 }
                 else
                 {
@@ -520,7 +507,7 @@ namespace Delineat.Assistant.Core.Stores
         public bool SetDefaultSyncStore(IDASyncStore syncStore)
         {
             if (syncStore == null) return false;
-            foreach (var group in Context.JobGroups)
+            foreach (var group in dataContext.JobGroups)
             {
                 group.IsCurrent = group.Name == syncStore.Name;
             }
@@ -530,7 +517,7 @@ namespace Delineat.Assistant.Core.Stores
 
         private JobGroup AssertCurrentGroup()
         {
-            var group = Context.JobGroups.Where(g => g.IsCurrent).SingleOrDefault();
+            var group = dataContext.JobGroups.Where(g => g.IsCurrent).SingleOrDefault();
             if (group == null)
             {
                 throw new ApplicationException("Configurare un archivio predefinito");
@@ -553,7 +540,7 @@ namespace Delineat.Assistant.Core.Stores
                     dbItem.InsertDate = DateTime.Now;
                     SetDWItem(item, dbItem, dbjob);
 
-                    Context.Add(dbItem);
+                    dataContext.Add(dbItem);
 
                     syncStore?.SyncItem(job, item);
 
@@ -561,7 +548,7 @@ namespace Delineat.Assistant.Core.Stores
 
 
 
-                    Context.SaveChanges(true);
+                    dataContext.SaveChanges(true);
                     result.Data = dbItem.ItemId;
                 }
                 else
@@ -602,7 +589,7 @@ namespace Delineat.Assistant.Core.Stores
             foreach (var tag in item.Tags)
             {
                 //Ricerco se il tag esiste già 
-                var foundTag = Context.Tags.FirstOrDefault(t => t.Description.ToUpper() == tag.Description.ToUpper());
+                var foundTag = dataContext.Tags.FirstOrDefault(t => t.Description.ToUpper() == tag.Description.ToUpper());
                 if (foundTag == null)
                     foundTag = new Tag() { Description = tag.Description.ToUpper(), Color = string.Empty };
 
@@ -669,14 +656,14 @@ namespace Delineat.Assistant.Core.Stores
             DWStoreInfo result = new DWStoreInfo();
             try
             {
-                var dbNote = Context.Notes.Where(n => n.NoteId == note.Id).FirstOrDefault();
+                var dbNote = dataContext.Notes.Where(n => n.NoteId == note.Id).FirstOrDefault();
                 if (dbNote != null)
                 {
                     dbNote.Text = note.Note;
                     dbNote.RemindedDate = note.RemaindedDate;
                     dbNote.ReminderDate = note.RemainderDate;
 
-                    Context.SaveChanges(true);
+                    dataContext.SaveChanges(true);
                 }
                 else
                 {
@@ -694,7 +681,7 @@ namespace Delineat.Assistant.Core.Stores
 
         public List<DWNote> GetUnremindedNotes()
         {
-            return Context.Notes.Include(n => n.NotesReminderRecipients)
+            return dataContext.Notes.Include(n => n.NotesReminderRecipients)
                 .Where(n => !n.RemindedDate.HasValue && n.ReminderType != (int)NoteReminderType.None).Select(n => dwObjectFactory.GetDWNote(n)).ToList();
         }
 
@@ -705,7 +692,7 @@ namespace Delineat.Assistant.Core.Stores
 
             if (note != null)
             {
-                var dbNote = Context.Notes.Include(n => n.Customers).ThenInclude(c => c.Customer)
+                var dbNote = dataContext.Notes.Include(n => n.Customers).ThenInclude(c => c.Customer)
                     .Include(n => n.Documents)
                     .Include(n => n.Items)
                     .Include(n => n.Jobs)
@@ -721,7 +708,7 @@ namespace Delineat.Assistant.Core.Stores
                         case NoteType.Item:
                             if (dbNote.Items != null)
                             {
-                                scope.Item = dwObjectFactory.GetDWItem(Context.Items.FirstOrDefault(i => i.ItemId == dbNote.Items.FirstOrDefault().ItemId));
+                                scope.Item = dwObjectFactory.GetDWItem(dataContext.Items.FirstOrDefault(i => i.ItemId == dbNote.Items.FirstOrDefault().ItemId));
                                 scope.Job = GetJob(scope.Item.JobId);
                             }
                             break;
@@ -742,7 +729,7 @@ namespace Delineat.Assistant.Core.Stores
 
         public bool AlreadySync(IDASyncStore syncStore)
         {
-            var findSync = Context.StoreSyncLogs.Include(s => s.Group).FirstOrDefault(s => s.Completed && s.Group.Name == syncStore.Name);
+            var findSync = dataContext.StoreSyncLogs.Include(s => s.Group).FirstOrDefault(s => s.Completed && s.Group.Name == syncStore.Name);
             return findSync != null;
         }
 
@@ -752,10 +739,10 @@ namespace Delineat.Assistant.Core.Stores
         public bool BeginSync(IDASyncStore store, ILogger syncLogger)
         {
             this.syncLogger = syncLogger;
-            Context.JobGroups.Load();
-            int groupCount = Context.JobGroups.Count();
+            dataContext.JobGroups.Load();
+            int groupCount = dataContext.JobGroups.Count();
 
-            var existingGroup = Context.JobGroups.FirstOrDefault(g => g.Name == store.Name);
+            var existingGroup = dataContext.JobGroups.FirstOrDefault(g => g.Name == store.Name);
             if (existingGroup == null)
             {
                 existingGroup = new JobGroup() { Name = store.Name, IsCurrent = groupCount == 0 };
@@ -773,18 +760,18 @@ namespace Delineat.Assistant.Core.Stores
                 Group = existingGroup
 
             };
-            Context.StoreSyncLogs.Add(syncLog);
-            Context.SaveChanges();
+            dataContext.StoreSyncLogs.Add(syncLog);
+            dataContext.SaveChanges();
             return true;
         }
 
         private Job GetExistingJob(DWJob job)
         {
-            var foundJob = Context.Jobs.Local.SingleOrDefault(j => j.Code == job.Code);
+            var foundJob = dataContext.Jobs.Local.SingleOrDefault(j => j.Code == job.Code);
             if (foundJob == null)
             {
 
-                foundJob = Context.Jobs.SingleOrDefault(j => j.Code == job.Code);
+                foundJob = dataContext.Jobs.SingleOrDefault(j => j.Code == job.Code);
             }
             return foundJob;
         }
@@ -799,13 +786,13 @@ namespace Delineat.Assistant.Core.Stores
                 dbJob.InsertDate = DateTime.Now;
                 dbJob.Group = syncLog.Group;
                 dbJob.Path = job.Path;
-                Context.Jobs.Add(dbJob);
+                dataContext.Jobs.Add(dbJob);
             }
             dbJob.Description = job.Description;
             dbJob.ExportSyncId = syncLog.SyncId;
 
             AddSyncLogEntry($"Sync job {job} completato");
-            Context.SaveChanges();
+            dataContext.SaveChanges();
             return true;
         }
 
@@ -826,7 +813,7 @@ namespace Delineat.Assistant.Core.Stores
                 {
                     dbItem = new Item();
                     dbItem.InsertDate = DateTime.Now;
-                    Context.Items.Add(dbItem);
+                    dataContext.Items.Add(dbItem);
                 }
 
                 SetDWItem(item, dbItem, dbJob);
@@ -842,7 +829,7 @@ namespace Delineat.Assistant.Core.Stores
                     if (note.Note.ImportSyncId == 0)
                         note.Note.ImportSyncId = dbItem.ImportSyncId;
                 }
-                Context.SaveChanges();
+                dataContext.SaveChanges();
 
                 return true;
             }
@@ -856,10 +843,10 @@ namespace Delineat.Assistant.Core.Stores
         private Item GetExistingItem(DWItem item, int jobId)
         {
 
-            var foundItem = Context.Items.Local.SingleOrDefault(i => i.ReferenceDate == item.Date && item.Description == i.Description && i.Who == item.Who && item.JobId == jobId);
+            var foundItem = dataContext.Items.Local.SingleOrDefault(i => i.ReferenceDate == item.Date && item.Description == i.Description && i.Who == item.Who && item.JobId == jobId);
             if (foundItem == null)
             {
-                foundItem = Context.Items.SingleOrDefault(i => i.ReferenceDate == item.Date && item.Description == i.Description && i.Who == item.Who && item.JobId == jobId);
+                foundItem = dataContext.Items.SingleOrDefault(i => i.ReferenceDate == item.Date && item.Description == i.Description && i.Who == item.Who && item.JobId == jobId);
             }
 
             if (foundItem != null)
@@ -884,7 +871,7 @@ namespace Delineat.Assistant.Core.Stores
             try
             {
                 syncLog.Completed = true;
-                Context.SaveChanges();
+                dataContext.SaveChanges();
                 syncLog = null;
                 syncLogger = null;
                 return true;
@@ -903,55 +890,17 @@ namespace Delineat.Assistant.Core.Stores
             return true;
         }
 
-        #region IDisposable Support
-        private bool disposedValue = false; // To detect redundant calls
-        private readonly ILogger logger;
-
-        protected virtual void Dispose(bool disposing)
-        {
-            if (!disposedValue)
-            {
-                if (disposing)
-                {
-                    // TODO: dispose managed state (managed objects).
-                    if (dataContext != null) dataContext.Dispose();
-                }
-
-                // TODO: free unmanaged resources (unmanaged objects) and override a finalizer below.
-                // TODO: set large fields to null.
-
-                disposedValue = true;
-            }
-        }
-
-        // TODO: override a finalizer only if Dispose(bool disposing) above has code to free unmanaged resources.
-        // ~DWDBFolderStore() {
-        //   // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
-        //   Dispose(false);
-        // }
-
-        // This code added to correctly implement the disposable pattern.
-        public void Dispose()
-        {
-            // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
-            Dispose(true);
-            // TODO: uncomment the following line if the finalizer is overridden above.
-            // GC.SuppressFinalize(this);
-        }
-        #endregion
-
-
 
         public byte[] GetDocumentVersionData(int id)
         {
-            var version = Context.DocumentVersions.Include(v => v.Document)
+            var version = dataContext.DocumentVersions.Include(v => v.Document)
                     .ThenInclude(d => d.Item).ThenInclude(i => i.Job).ThenInclude(j => j.Group).Where(dv => dv.DocumentVersionId == id).FirstOrDefault();
 
             //Get FilePath
 
             string filename = dwObjectFactory.GetDocumentVersionPath(version);
             version.Document.OpenedCount++;
-            Context.SaveChanges();
+            dataContext.SaveChanges();
 
 
             return File.ReadAllBytes(filename);
@@ -960,7 +909,7 @@ namespace Delineat.Assistant.Core.Stores
 
         public string GetDocumentVersionPath(int id)
         {
-            var version = Context.DocumentVersions.Include(v => v.Document)
+            var version = dataContext.DocumentVersions.Include(v => v.Document)
                     .ThenInclude(d => d.Item).ThenInclude(i => i.Job).ThenInclude(j => j.Group).Where(dv => dv.DocumentVersionId == id).FirstOrDefault();
 
             //Get FilePath
@@ -973,7 +922,7 @@ namespace Delineat.Assistant.Core.Stores
 
         public List<DWTag> GetTags()
         {
-            return Context.Tags.Include(jt => jt.Jobs).Select(t => dwObjectFactory.GetDWTag(t)).ToList();
+            return dataContext.Tags.Include(jt => jt.Jobs).Select(t => dwObjectFactory.GetDWTag(t)).ToList();
         }
 
         public DWStoreInfo DeleteJob(int jobId)
@@ -989,7 +938,7 @@ namespace Delineat.Assistant.Core.Stores
 
                     GetSyncStore(dbJob).SyncDeleteJob(dwObjectFactory.GetDWJob(dbJob));
 
-                    Context.SaveChanges(true);
+                    dataContext.SaveChanges(true);
                 }
                 else
                 {
@@ -1019,7 +968,7 @@ namespace Delineat.Assistant.Core.Stores
 
                     GetSyncStore(dbItem.Job).SyncDeleteItem(dwObjectFactory.GetDWJob(dbItem.Job), dwObjectFactory.GetDWItem(dbItem));
 
-                    Context.SaveChanges(true);
+                    dataContext.SaveChanges(true);
                 }
                 else
                 {
@@ -1063,7 +1012,7 @@ namespace Delineat.Assistant.Core.Stores
 
                     GetSyncStore(dbDocument.Item.Job).SyncDeleteDocument(dwObjectFactory.GetDWJob(dbDocument.Item.Job), dwObjectFactory.GetDWItem(dbDocument.Item), dwObjectFactory.GetDWDocument(dbDocument));
 
-                    Context.SaveChanges(true);
+                    dataContext.SaveChanges(true);
                 }
                 else
                 {
@@ -1090,13 +1039,13 @@ namespace Delineat.Assistant.Core.Stores
             DWStoreInfo result = new DWStoreInfo();
             try
             {
-                var itemTag = Context.ItemsTags.Include(it => it.Tag)
+                var itemTag = dataContext.ItemsTags.Include(it => it.Tag)
                 .Include(it => it.Item).ThenInclude(i => i.Job).ThenInclude(j => j.Group)
                 .FirstOrDefault(it => it.ItemId == itemId && it.TagId == tagId);
 
                 if (itemTag != null)
                 {
-                    Context.ItemsTags.Remove(itemTag);
+                    dataContext.ItemsTags.Remove(itemTag);
 
                     GetSyncStore(itemTag.Item.Job).SyncRemoveItemTag(dwObjectFactory.GetDWJob(itemTag.Item.Job), dwObjectFactory.GetDWItem(itemTag.Item), dwObjectFactory.GetDWTag(itemTag.Tag));
 
@@ -1116,14 +1065,14 @@ namespace Delineat.Assistant.Core.Stores
             DWStoreInfo result = new DWStoreInfo();
             try
             {
-                var documentTag = Context.DocumentsTags.Include(dt => dt.Tag)
+                var documentTag = dataContext.DocumentsTags.Include(dt => dt.Tag)
                 .Include(d => d.Document.Versions)
                 .Include(dt => dt.Document).ThenInclude(d => d.Item).ThenInclude(i => i.Job).ThenInclude(j => j.Group)
                 .FirstOrDefault(dt => dt.DocumentId == documentId && dt.TagId == tagId);
 
                 if (documentTag != null)
                 {
-                    Context.DocumentsTags.Remove(documentTag);
+                    dataContext.DocumentsTags.Remove(documentTag);
 
                     GetSyncStore(documentTag.Document.Item.Job.Group).SyncRemoveDocumemtTag(dwObjectFactory.GetDWJob(documentTag.Document.Item.Job), dwObjectFactory.GetDWItem(documentTag.Document.Item), dwObjectFactory.GetDWDocument(documentTag.Document), dwObjectFactory.GetDWTag(documentTag.Tag));
 
@@ -1175,7 +1124,7 @@ namespace Delineat.Assistant.Core.Stores
 
                         dbDocument.Tags.Add(documentTags);
                     }
-                    Context.SaveChanges(true);
+                    dataContext.SaveChanges(true);
 
                     //Ricarico i tag del documento per restituirli
                     dbDocument = GetDocumentFromId(documentId);
@@ -1225,7 +1174,7 @@ namespace Delineat.Assistant.Core.Stores
 
                         dbItem.Tags.Add(itemsTags);
                     }
-                    Context.SaveChanges(true);
+                    dataContext.SaveChanges(true);
 
                     //Ricarico i tag del documento per restituirli
                     dbItem = GetItemFromId(itemId);
@@ -1263,14 +1212,14 @@ namespace Delineat.Assistant.Core.Stores
             try
             {
 
-                var workTypes = Context.WorkLogTypes.OrderBy(t => t.Order).Select(t => dwObjectFactory.GetDWWorkLogType(t)).ToList();
+                var workTypes = dataContext.WorkLogTypes.OrderBy(t => t.Order).Select(t => dwObjectFactory.GetDWWorkLogType(t)).ToList();
                 //Se vuoto popolo il database
                 if (workTypes.Count == 0)
                 {
-                    Context.WorkLogTypes.Add(new WorkLogType() { Description = "GENERICO", Order = 10 });
-                    Context.WorkLogTypes.Add(new WorkLogType() { Description = "MODELLAZIONE 3D", Order = 20 });
-                    Context.WorkLogTypes.Add(new WorkLogType() { Description = "ANALISI", Order = 30 });
-                    Context.WorkLogTypes.Add(new WorkLogType() { Description = "RIUNIONE", Order = 40 });
+                    dataContext.WorkLogTypes.Add(new WorkLogType() { Description = "GENERICO", Order = 10 });
+                    dataContext.WorkLogTypes.Add(new WorkLogType() { Description = "MODELLAZIONE 3D", Order = 20 });
+                    dataContext.WorkLogTypes.Add(new WorkLogType() { Description = "ANALISI", Order = 30 });
+                    dataContext.WorkLogTypes.Add(new WorkLogType() { Description = "RIUNIONE", Order = 40 });
 
                     SaveChangesAndSync();
                     return GetWorkLogTypes();
@@ -1296,7 +1245,7 @@ namespace Delineat.Assistant.Core.Stores
                 if (dbWorkLog != null)
                 {
 
-                    Context.SaveChanges(true);
+                    dataContext.SaveChanges(true);
 
                     result.Stored = true;
                     result.Data = dwObjectFactory.GetDWWorkLog(dbWorkLog);
@@ -1338,7 +1287,7 @@ namespace Delineat.Assistant.Core.Stores
                         dbLog.WorkedHour = (int)log.WorkedHour.TotalMinutes;
                     }
 
-                    Context.SaveChanges(true);
+                    dataContext.SaveChanges(true);
 
                     //Ricarico i tag del documento per restituirli
                     dbItem = GetItemFromId(itemId);
@@ -1363,7 +1312,7 @@ namespace Delineat.Assistant.Core.Stores
 
         private DocumentVersion GetDocumentVersionFromId(int documentVersionId)
         {
-            return Context.DocumentVersions.Include(d => d.Thumbnails).Include(d => d.Document)
+            return dataContext.DocumentVersions.Include(d => d.Thumbnails).Include(d => d.Document)
                 .ThenInclude(d => d.Item)
                 .ThenInclude(i => i.Job).ThenInclude(j => j.Group).FirstOrDefault(d => d.DocumentVersionId == documentVersionId);
         }
@@ -1400,7 +1349,7 @@ namespace Delineat.Assistant.Core.Stores
                     dbDocVersion.UpdateDate = DateTime.Now;
                     dbDocVersion.WaitingForReply = documentVersion.WaitingForReply;
 
-                    Context.SaveChanges(true);
+                    dataContext.SaveChanges(true);
 
                     //Ricarico i tag del documento per restituirli               
                     result.Stored = true;
@@ -1436,7 +1385,7 @@ namespace Delineat.Assistant.Core.Stores
             if (sourceSyncStores == null) return;
             foreach (var syncStore in sourceSyncStores)
             {
-                var group = Context.JobGroups.FirstOrDefault(g => g.Name == syncStore.Name);
+                var group = dataContext.JobGroups.FirstOrDefault(g => g.Name == syncStore.Name);
                 if (group != null)
                 {
                     var fileSyncStore = syncStore as DAFileFolderStore;
