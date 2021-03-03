@@ -21,7 +21,7 @@ namespace Delineat.Assistant.Core.Users
         {
             this.logger = logger;
             this.dataContext = dataContext;
-            this.dataObjectFactory = new DADataObjectFactory();
+            this.dataObjectFactory = new DADataObjectFactory(dataContext);
             this.dwObjectFactory = new DADWObjectFactory(dataContext);
         }
 

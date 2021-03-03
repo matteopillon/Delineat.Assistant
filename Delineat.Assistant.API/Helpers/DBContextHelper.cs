@@ -27,5 +27,11 @@ namespace Delineat.Assistant.API.Helpers
         {
             return dbContext.DayWorkTypes.FirstOrDefault(j => j.DayWorkTypeId == id);
         }
+
+        public static Customer GetCustomer(this DAAssistantDBContext dbContext, int id)
+        {
+            return dbContext.Customers.FirstOrDefault(j => j.CustomerId == id);
+        }
+
     }
 }

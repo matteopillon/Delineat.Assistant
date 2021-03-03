@@ -9,7 +9,7 @@ namespace Delineat.Assistant.Core.Data.Models
         {
             Notes = new HashSet<CustomersNotes>();
             Specifications = new HashSet<Specification>();
-            Job = new HashSet<Job>();
+            Jobs = new HashSet<Job>();
         }
         [Key]
         public int CustomerId { get; set; }
@@ -20,6 +20,6 @@ namespace Delineat.Assistant.Core.Data.Models
 
         public ICollection<CustomersNotes> Notes { get; set; }
         public ICollection<Specification> Specifications { get; set; }
-        public ICollection<Job> Job { get; set; }
+        public ICollection<Job> Jobs { get; set; }
     }
 }

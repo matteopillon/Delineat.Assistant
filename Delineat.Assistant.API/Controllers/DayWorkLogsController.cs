@@ -1,5 +1,5 @@
 ﻿using Delineat.Assistant.API.Helpers;
-using Delineat.Assistant.API.Models.Results;
+using Delineat.Assistant.API.Models;
 using Delineat.Assistant.Core.Data;
 using Delineat.Assistant.Core.Data.Models;
 using Delineat.Assistant.Core.ObjectFactories;
@@ -22,7 +22,7 @@ namespace Delineat.Assistant.API.Controllers
         public DayWorkLogsController(DAAssistantDBContext assistantDBContext, ILogger<DayWorkLogsController> logger) : base(logger)
         {
             this.dwObjectFactory = new DADWObjectFactory(assistantDBContext);
-            this.dataObjectFactory = new DADataObjectFactory();
+            this.dataObjectFactory = new DADataObjectFactory(assistantDBContext);
             this.assistantDBContext = assistantDBContext;
         }
 
@@ -65,9 +65,17 @@ namespace Delineat.Assistant.API.Controllers
         {
             try
             {
-                return MakeDayWorkLogsQuery()
+                var log = MakeDayWorkLogsQuery()
                     .Where(w => w.DayWorkLogId == id)
                     .Select(d => dwObjectFactory.GetDWDayWorkLog(d)).FirstOrDefault();
+                if (log != null)
+                {
+                    return log;
+                }
+                else
+                {
+                    return NotFound();
+                }
             }
             catch (Exception ex)
             {
@@ -77,7 +85,7 @@ namespace Delineat.Assistant.API.Controllers
 
 
 
-        private DayWorkLog FillDayWorkLogFromRequest(DayWorkLog log, DayWorkLogRequest data)
+        private DayWorkLog FillFromRequest(DayWorkLog log, DayWorkLogRequest data)
         {
             if (data.Date.Kind == DateTimeKind.Utc)
             {
@@ -104,7 +112,7 @@ namespace Delineat.Assistant.API.Controllers
             if (log.Job == null) ModelState.AddModelError(nameof(log.Job), "Commessa non trovata");
             if (log.User == null) ModelState.AddModelError(nameof(log.User), "Utente non trovato");
             if (log.Minutes <= 0) ModelState.AddModelError(nameof(log.Minutes), "Le ore devono essere valorizzate");
-            if (log.WorkType == null) ModelState.AddModelError(nameof(log.SubJob), "Il tipo di registrazione deve essere valorizzato");
+            if (log.WorkType == null) ModelState.AddModelError(nameof(log.WorkType), "Il tipo di registrazione deve essere valorizzato");
             if (log.SubJob?.Job != null && log.Job != null && log.Job.JobId != log.SubJob.Job.JobId) ModelState.AddModelError(nameof(log.SubJob), $"La sotto commessa {log.SubJob.Description} non appartiene alla commessa {log.Job.Description}");
             return ModelState.IsValid;
         }
@@ -112,15 +120,15 @@ namespace Delineat.Assistant.API.Controllers
         private bool Validate(DayWorkLogRequest data)
         {
             if (data == null) ModelState.AddModelError(nameof(data), "WorkLog non valorizzato");
-            if (data.JobId == 0) ModelState.AddModelError(nameof(data.JobId), "Commessa non valorizzata");
-            if (data.UserId == 0) ModelState.AddModelError(nameof(data.UserId), "Utente non valorizzato");
-            if (data.Minutes <= 0) ModelState.AddModelError(nameof(data.Minutes), "Le ore devono essere valorizzate");
-            if (data.DayWorkTypeId == 0) ModelState.AddModelError(nameof(data.DayWorkTypeId), "Il tipo di registrazione deve essere valorizzato");
+            if (data.JobId == 0) ModelState.AddModelError(nameof(DayWorkLog.Job), "Commessa non valorizzata");
+            if (data.UserId == 0) ModelState.AddModelError(nameof(DayWorkLog.User), "Utente non valorizzato");
+            if (data.Minutes <= 0) ModelState.AddModelError(nameof(DayWorkLog.Minutes), "Le ore devono essere valorizzate");
+            if (data.DayWorkTypeId == 0) ModelState.AddModelError(nameof(DayWorkLog.WorkType), "Il tipo di registrazione deve essere valorizzato");
 
             return ModelState.IsValid;
         }
 
-        [HttpPut()]
+        [HttpPut("{id}")]
         public ActionResult<DWDayWorkLog> UpdateWorkLog(int id, DayWorkLogRequest data)
         {
             try
@@ -132,7 +140,7 @@ namespace Delineat.Assistant.API.Controllers
 
                     if (log != null)
                     {
-                        if (Validate(FillDayWorkLogFromRequest(log, data)))
+                        if (Validate(FillFromRequest(log, data)))
                         {
 
                             assistantDBContext.DayWorkLogs.Update(log);
@@ -172,7 +180,7 @@ namespace Delineat.Assistant.API.Controllers
                 {
 
                     var log = new DayWorkLog();
-                    if (Validate(FillDayWorkLogFromRequest(log, data)))
+                    if (Validate(FillFromRequest(log, data)))
                     {
 
                         assistantDBContext.DayWorkLogs.Add(log);

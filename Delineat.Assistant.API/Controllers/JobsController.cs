@@ -1,6 +1,10 @@
-﻿using Delineat.Assistant.API.Models;
+﻿using Delineat.Assistant.API.Helpers;
+using Delineat.Assistant.API.Models;
 using Delineat.Assistant.API.Validators;
+using Delineat.Assistant.Core.Data;
+using Delineat.Assistant.Core.Data.Models;
 using Delineat.Assistant.Core.Interfaces;
+using Delineat.Assistant.Core.ObjectFactories;
 using Delineat.Assistant.Core.Stores.Configuration;
 using Delineat.Assistant.Models;
 using Microsoft.AspNetCore.Http;
@@ -21,9 +25,16 @@ namespace Delineat.Assistant.API.Controllers
     {
         private readonly IMemoryCache memoryCache;
         private const string kJobsCacheKey = "JOBS_CACHE_KEY";
-        public JobsController(IDAStore store,
+        private readonly DADWObjectFactory dwObjectFactory;
+
+        public DAAssistantDBContext assistantDBContext { get; }
+
+
+        public JobsController(DAAssistantDBContext assistantDBContext, IDAStore store,
             ILogger<JobsController> logger, IMemoryCache memoryCache) : base(store, logger)
         {
+            this.dwObjectFactory = new DADWObjectFactory(assistantDBContext);
+            this.assistantDBContext = assistantDBContext;
             this.memoryCache = memoryCache;
         }
 
@@ -99,32 +110,109 @@ namespace Delineat.Assistant.API.Controllers
 
         }
 
+        private bool Validate(DWJob job)
+        {
+            var validation = new DAModelValidator(Store).Validate(job);
+            if (!validation.IsValid)
+            {
+                foreach (var message in validation.Errors)
+                {
+                    ModelState.AddModelError(nameof(job), message);
+                }
+            }
+            return ModelState.IsValid;
+        }
+
+        private bool Validate(DAJobRequest data, int? id = null)
+        {
+            if (data == null) ModelState.AddModelError(nameof(data), "Commessa non valorizzato");
+            if (string.IsNullOrWhiteSpace(data.Code))
+            {
+                ModelState.AddModelError(nameof(data.Code), "Codice commessa non valorizzato");
+            }
+            else
+            {
+                // Verificare esistenza codice commessa?
+            }
+            if (string.IsNullOrWhiteSpace(data.Description))
+            {
+                ModelState.AddModelError(nameof(data.Description), "Descrizione commessa non valorizzata");
+            }
+            if (data.CustomerId == 0)
+            {
+                ModelState.AddModelError(nameof(Job.Customer), "Cliente commessa non valorizzato");
+            }
+            else
+            {
+                //Verifico esistenza del cliente
+                var customer = assistantDBContext.Customers.FirstOrDefault(c => c.CustomerId == data.CustomerId);
+                if (customer == null)
+                {
+                    ModelState.AddModelError(nameof(Job.Customer), $"Cliente con id ${data.CustomerId} non trovato");
+                }
+            }
+
+
+
+            return ModelState.IsValid;
+        }
+        private Job FillFromRequest(Job job, DAJobRequest data)
+        {
+
+            job.Code = data.Code;
+            job.Customer = data.CustomerId > 0 ? assistantDBContext.GetCustomer(data.CustomerId) : null;
+            job.Description = data.Description;
+            job.CustomerInfo = data.Description;
+            job.OrderRef = data.OrderRef;
+            job.QuotationRef = data.QuotationRef;
+
+            return job;
+        }
         [HttpPut("{id}")]
-        public ActionResult<DWJob> SaveJob(int? id, [FromBody] DWJob job)
+        public ActionResult<DWJob> SaveJob(int id, DAJobRequest job)
         {
 
             try
             {
-
-
-                var validation = new DAModelValidator(Store).Validate(job);
-                if (validation.IsValid)
+                if (Validate(job))
                 {
-                    var result = Store.Store(job);
-                    //Tolgo dalla cache, dovrà essere ricaricata
-                    memoryCache?.Remove(kJobsCacheKey);
-                    if (result.Stored)
-                        return job;
-                    else
-                        return BadRequest(result.ErrorMessages);
+                    var dbJob = assistantDBContext.GetJob(id);
+                    if (dbJob != null)
+                    {
+                        var dwJob = this.dwObjectFactory.GetDWJob(FillFromRequest(dbJob, job));
+                        var validation = new DAModelValidator(Store).Validate(dwJob);
+                        if (validation.IsValid)
+                        {
+                            var result = Store.Store(dwJob);
+                            //Tolgo dalla cache, dovrà essere ricaricata
+                            memoryCache?.Remove(kJobsCacheKey);
+                            if (result.Stored)
+                                return dwJob;
+                            else
+                            {
+                                foreach (var message in result.ErrorMessages)
+                                {
+                                    ModelState.AddModelError(nameof(Job), message);
+                                }
+                                return BadRequest(ModelState);
+                            }
 
+
+                        }
+                        else
+                        {
+                            return BadRequest(ModelState);
+                        }
+                    }
+                    else
+                    {
+                        return NotFound();
+                    }
                 }
                 else
                 {
-                    return BadRequest(validation.Errors);
+                    return BadRequest(ModelState);
                 }
-
-
             }
             catch (Exception ex)
             {
@@ -132,6 +220,50 @@ namespace Delineat.Assistant.API.Controllers
             }
         }
 
+
+        [HttpPost()]
+        public ActionResult<DWJob> InsertJob(DAJobRequest job)
+        {
+
+            try
+            {
+                if (Validate(job))
+                {
+
+                    var dwJob = this.dwObjectFactory.GetDWJob(FillFromRequest(new Job(), job));
+                    var validation = new DAModelValidator(Store).Validate(dwJob);
+                    if (validation.IsValid)
+                    {
+                        var result = Store.Store(dwJob);
+                        //Tolgo dalla cache, dovrà essere ricaricata
+                        memoryCache?.Remove(kJobsCacheKey);
+                        if (result.Stored)
+                            return dwJob;
+                        else
+                        {
+                            foreach (var message in result.ErrorMessages)
+                            {
+                                ModelState.AddModelError(nameof(Job), message);
+                            }
+                            return BadRequest(ModelState);
+                        }
+                    }
+                    else
+                    {
+                        return BadRequest(ModelState);
+                    }
+
+                }
+                else
+                {
+                    return BadRequest(ModelState);
+                }
+            }
+            catch (Exception ex)
+            {
+                return Problem(ex);
+            }
+        }
 
         [Route("{jobId}/tags/{id}")]
         [HttpPut()]

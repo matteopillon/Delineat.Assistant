@@ -33,7 +33,7 @@ namespace Delineat.Assistant.Core.Stores
         {
             this.logger = logger;
             this.dataContext = dataContext;
-            this.dataObjectFactory = new DADataObjectFactory();
+            this.dataObjectFactory = new DADataObjectFactory(dataContext);
             this.dwObjectFactory = new DADWObjectFactory(dataContext);
         }
 
@@ -406,6 +406,8 @@ namespace Delineat.Assistant.Core.Stores
                     dbJob = dataObjectFactory.GetDBJob(job);
 
                     dbJob.Group = AssertCurrentGroup();
+                   
+                    
                     dataContext.Add(dbJob);
                 }
                 else

@@ -1,11 +1,20 @@
-﻿using Delineat.Assistant.Core.Data.Models;
+﻿using Delineat.Assistant.Core.Data;
+using Delineat.Assistant.Core.Data.Models;
 using Delineat.Assistant.Models;
 using System;
+using System.Linq;
 
 namespace Delineat.Assistant.Core.ObjectFactories
 {
     public class DADataObjectFactory
     {
+        private readonly DAAssistantDBContext dbContext;
+
+        public DADataObjectFactory(DAAssistantDBContext dbContext)
+        {
+            this.dbContext = dbContext;
+        }
+
         public User GetDBUser(DWUser user)
         {
             return new User()
@@ -57,7 +66,7 @@ namespace Delineat.Assistant.Core.ObjectFactories
                 InsertDate = DateTime.Now,
                 Description = job.Description,
                 Code = job.Code,
-                Customer = GetDBCustomer(job.Customer),
+                Customer = job.Customer != null ? dbContext.Customers.FirstOrDefault(c=>c.CustomerId == job.Customer.CustomerId): null,
                 CustomerInfo = job.CustomerInfo,
                 OrderRef = job.OrderRef,
                 QuotationRef = job.QuotationRef,

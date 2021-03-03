@@ -94,6 +94,24 @@ namespace Delineat.Assistant.Core.ObjectFactories
             }
         }
 
+        public DWCustomer GetDWCustomer(Customer customer)
+        {
+            if (customer != null)
+            {
+                return new DWCustomer()
+                {
+                    Code = customer.Code,
+                    CustomerId = customer.CustomerId,
+                    Description = customer.Description,
+                    Domain = customer.Domain
+                };
+            }
+            else
+            {
+                return null;
+            }
+        }
+
         public DWDayWorkType GetDWDayWorkType(DayWorkType dayWorkType)
         {
             if (dayWorkType != null)
@@ -148,24 +166,6 @@ namespace Delineat.Assistant.Core.ObjectFactories
                 result.SubJobs = subJob.SubJobs?.Select(sj => GetDWSubJob(sj)).ToArray() ?? new DWSubJob[0];
 
                 return result;
-            }
-            else
-            {
-                return null;
-            }
-        }
-
-        private DWCustomer GetDWCustomer(Customer customer)
-        {
-            if (customer != null)
-            {
-                return new DWCustomer()
-                {
-                    Code = customer.Code,
-                    CustomerId = customer.CustomerId,
-                    Description = customer.Description,
-                    Domain = customer.Domain
-                };
             }
             else
             {
