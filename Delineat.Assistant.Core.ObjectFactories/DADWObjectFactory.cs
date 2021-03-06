@@ -33,7 +33,7 @@ namespace Delineat.Assistant.Core.ObjectFactories
             };
         }
 
-        public DWJob GetDWJob(Job job)
+        public DWJob GetDWJob(Job job, bool includeSubJobs = true)
         {
             if (job != null)
             {
@@ -78,7 +78,7 @@ namespace Delineat.Assistant.Core.ObjectFactories
                     }
                 }
 
-                if (job.SubJobs != null)
+                if (includeSubJobs && job.SubJobs != null)
                 {
                     foreach (var subJob in job.SubJobs)
                     {
@@ -151,16 +151,19 @@ namespace Delineat.Assistant.Core.ObjectFactories
             }
         }
 
-        private DWSubJob GetDWSubJob(SubJob subJob)
+        public DWSubJob GetDWSubJob(SubJob subJob)
         {
             if (subJob != null)
             {
                 var result = new DWSubJob()
                 {
                     Description = subJob.Description,
-                    //Job = GetDWJob(subJob.Job),
+                    Code = subJob.Code,
+                    Job = GetDWJob(subJob.Job,false),
                     Parent = GetDWSubJob(subJob.Parent),
                     SubJobId = subJob.SubJobId,
+                    IsDeleted = subJob.DeleteDate.HasValue,
+                    Customer = GetDWCustomer(subJob.Customer?? subJob.Job?.Customer)
                 };
 
                 result.SubJobs = subJob.SubJobs?.Select(sj => GetDWSubJob(sj)).ToArray() ?? new DWSubJob[0];
@@ -408,6 +411,7 @@ namespace Delineat.Assistant.Core.ObjectFactories
             }
         }
 
+       
         public Topic GetDWTopic(DWTopic topic)
         {
             throw new NotImplementedException();

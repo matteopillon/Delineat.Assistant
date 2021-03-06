@@ -6,7 +6,7 @@ using Delineat.Assistant.Core.Interfaces;
 using Delineat.Assistant.Core.Tips;
 using Delineat.Assistant.Core.Tips.Email;
 using Delineat.Assistant.Core.Tips.Email.EML;
-using Delineat.Assistant.Core.Tips.Email.Outlook;
+// using Delineat.Assistant.Core.Tips.Email.Outlook;
 using Delineat.Assistant.Core.Tips.Interfaces;
 using Delineat.Assistant.Models;
 using Microsoft.AspNetCore.Http;
@@ -87,7 +87,7 @@ namespace Delineat.Assistant.API.Controllers
         {
             DWMultiItemFiller filler = new DWMultiItemFiller();
             filler.Fillers.Add(new DWEmailFiller(new DWEMLMsgReader()));
-            filler.Fillers.Add(new DWEmailFiller(new DWOutlookMsgReader()));
+            // filler.Fillers.Add(new DWEmailFiller(new DWOutlookMsgReader()));
             return filler;
         }
 

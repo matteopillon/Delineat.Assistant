@@ -229,9 +229,6 @@ namespace Delineat.Assistant.Core.Data
 
             #endregion
 
-
-
-
             #region Credentials          
 
             modelBuilder.Entity<UserCredential>().HasIndex(nameof(UserCredential.Username)).IsUnique();

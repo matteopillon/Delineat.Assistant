@@ -4,14 +4,16 @@ using Delineat.Assistant.Core.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace Delineat.Workflow.Core.SqlServer.Migrations
 {
     [DbContext(typeof(DAAssistantDBContext))]
-    partial class DAAssistantDBContextModelSnapshot : ModelSnapshot
+    [Migration("20210305160251_AddSubJobCode")]
+    partial class AddSubJobCode
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -410,9 +412,6 @@ namespace Delineat.Workflow.Core.SqlServer.Migrations
                     b.Property<DateTime>("ReferenceDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<int?>("SubJobId")
-                        .HasColumnType("int");
-
                     b.Property<DateTime?>("UpdateDate")
                         .HasColumnType("datetime2");
 
@@ -422,8 +421,6 @@ namespace Delineat.Workflow.Core.SqlServer.Migrations
                     b.HasKey("ItemId");
 
                     b.HasIndex("JobId");
-
-                    b.HasIndex("SubJobId");
 
                     b.ToTable("Items");
                 });
@@ -911,29 +908,14 @@ namespace Delineat.Workflow.Core.SqlServer.Migrations
                     b.Property<int?>("CustomerId")
                         .HasColumnType("int");
 
-                    b.Property<DateTime?>("DeleteDate")
-                        .HasColumnType("datetime2");
-
                     b.Property<string>("Description")
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<int?>("ExportSyncId")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("ImportSyncId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("InsertDate")
-                        .HasColumnType("datetime2");
 
                     b.Property<int?>("JobId")
                         .HasColumnType("int");
 
                     b.Property<int?>("ParentSubJobId")
                         .HasColumnType("int");
-
-                    b.Property<DateTime?>("UpdateDate")
-                        .HasColumnType("datetime2");
 
                     b.HasKey("SubJobId");
 
@@ -1408,13 +1390,7 @@ namespace Delineat.Workflow.Core.SqlServer.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Delineat.Assistant.Core.Data.Models.SubJob", "SubJob")
-                        .WithMany("Items")
-                        .HasForeignKey("SubJobId");
-
                     b.Navigation("Job");
-
-                    b.Navigation("SubJob");
                 });
 
             modelBuilder.Entity("Delineat.Assistant.Core.Data.Models.ItemsNotes", b =>
@@ -1852,8 +1828,6 @@ namespace Delineat.Workflow.Core.SqlServer.Migrations
             modelBuilder.Entity("Delineat.Assistant.Core.Data.Models.SubJob", b =>
                 {
                     b.Navigation("DayWorkLogs");
-
-                    b.Navigation("Items");
 
                     b.Navigation("SubJobs");
                 });

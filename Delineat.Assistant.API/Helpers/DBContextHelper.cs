@@ -1,5 +1,6 @@
 ﻿using Delineat.Assistant.Core.Data;
 using Delineat.Assistant.Core.Data.Models;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,7 +16,7 @@ namespace Delineat.Assistant.API.Helpers
         }
         public static Job GetJob(this DAAssistantDBContext dbContext, int id)
         {
-            return dbContext.Jobs.FirstOrDefault(j => j.JobId == id);
+            return dbContext.Jobs.Include(j => j.Customer).FirstOrDefault(j => j.JobId == id);
         }
 
         public static SubJob GetSubJob(this DAAssistantDBContext dbContext, int id)

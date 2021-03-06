@@ -1,14 +1,27 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
     <Configurations>Debug;Release;DebugStaging;ReleaseStaging</Configurations>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="Email\Outlook\DWOutlookMsgReader.cs" />
+    <Compile Remove="Email\Outlook\DWOutlookStorage.cs" />
+  </ItemGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\Delineat.Assistant.Core.Tips.EML\Delineat.Assistant.Core.Tips.EML.csproj" />
     <ProjectReference Include="..\Delineat.Assistant.Core\Delineat.Assistant.Core.csproj" />
     <ProjectReference Include="..\Delineat.Assistant.Models\Delineat.Assistant.Models.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Email\Outlook\" />
   </ItemGroup>
 
 </Project>

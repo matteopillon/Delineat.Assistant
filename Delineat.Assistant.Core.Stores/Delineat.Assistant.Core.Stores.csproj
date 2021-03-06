@@ -5,6 +5,10 @@
     <Configurations>Debug;Release;DebugStaging;ReleaseStaging</Configurations>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+  </PropertyGroup>
+
   <ItemGroup>
     <COMReference Include="IWshRuntimeLibrary.dll">
       <WrapperTool>tlbimp</WrapperTool>

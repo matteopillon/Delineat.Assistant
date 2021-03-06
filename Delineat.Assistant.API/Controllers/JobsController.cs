@@ -9,6 +9,7 @@ using Delineat.Assistant.Core.Stores.Configuration;
 using Delineat.Assistant.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -338,6 +339,24 @@ namespace Delineat.Assistant.API.Controllers
             catch (Exception ex)
             {
                 logger.LogError(new EventId(DAConsts.Logs.LoggerExceptionEventId), ex, ex.Message);
+                return Problem(ex);
+            }
+        }
+
+        [HttpGet("jobs/{jobId}/subjobs")]
+        public ActionResult<DWSubJob[]> GetSubJobs(int jobId)
+        {
+            try
+            {
+                var subJobs = assistantDBContext.SubJobs
+                    .Include(sj => sj.Job).ThenInclude(j => j.Customer)
+                    .Include(sj => sj.Customer)
+                    .Where(sj => sj.Job.JobId == jobId)
+                    .Select(sj => dwObjectFactory.GetDWSubJob(sj));
+                return subJobs.ToArray();
+            }
+            catch (Exception ex)
+            {
                 return Problem(ex);
             }
         }

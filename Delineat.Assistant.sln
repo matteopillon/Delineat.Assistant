@@ -19,7 +19,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Delineat.Assistant.Core.Tip
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Delineat.Assistant.Core.Users", "Delineat.Assistant.Core.Users\Delineat.Assistant.Core.Users.csproj", "{703BCED3-15F3-4E3C-82B4-DCF8C5E5A423}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Delineat.Assistant.Core.ObjectFactories", "Delineat.Assistant.Core.ObjectFactories\Delineat.Assistant.Core.ObjectFactories.csproj", "{F2A29F45-65C2-4962-863C-D53057B16B31}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Delineat.Assistant.Core.ObjectFactories", "Delineat.Assistant.Core.ObjectFactories\Delineat.Assistant.Core.ObjectFactories.csproj", "{F2A29F45-65C2-4962-863C-D53057B16B31}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

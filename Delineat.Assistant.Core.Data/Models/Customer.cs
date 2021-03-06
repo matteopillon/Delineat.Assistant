@@ -21,5 +21,7 @@ namespace Delineat.Assistant.Core.Data.Models
         public ICollection<CustomersNotes> Notes { get; set; }
         public ICollection<Specification> Specifications { get; set; }
         public ICollection<Job> Jobs { get; set; }
+
+        public ICollection<SubJob> SubJobs { get; set; }
     }
 }

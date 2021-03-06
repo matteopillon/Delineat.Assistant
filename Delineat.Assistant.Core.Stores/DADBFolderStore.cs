@@ -29,7 +29,7 @@ namespace Delineat.Assistant.Core.Stores
         public Dictionary<string, string> settings = new Dictionary<string, string>();
 
 
-        public DADBFolderStore(ILogger<DADBFolderStore> logger,DAAssistantDBContext dataContext)
+        public DADBFolderStore(ILogger<DADBFolderStore> logger, DAAssistantDBContext dataContext)
         {
             this.logger = logger;
             this.dataContext = dataContext;
@@ -69,7 +69,7 @@ namespace Delineat.Assistant.Core.Stores
                 .Include(j => j.Topics)
                 .Include(j => j.Customer)
                 .Include(j => j.Codes)
-                .Include(j => j.SubJobs)
+                .Include(j => j.SubJobs).ThenInclude(sj => sj.Customer)
                 .Include(j => j.Tags).ThenInclude(t => t.Tag).Where(j => !j.DeleteDate.HasValue);
         }
 
@@ -176,7 +176,7 @@ namespace Delineat.Assistant.Core.Stores
             catch (Exception ex)
             {
                 logger.LogError(ex, $"Impossibile recuperare gli item del job {jobId}");
-                throw ;
+                throw;
             }
         }
 
@@ -406,8 +406,8 @@ namespace Delineat.Assistant.Core.Stores
                     dbJob = dataObjectFactory.GetDBJob(job);
 
                     dbJob.Group = AssertCurrentGroup();
-                   
-                    
+
+
                     dataContext.Add(dbJob);
                 }
                 else
