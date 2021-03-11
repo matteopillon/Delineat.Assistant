@@ -6,6 +6,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Include="..\.editorconfig" Link=".editorconfig" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Delineat.Assistant.Core.ObjectFactories\Delineat.Assistant.Core.ObjectFactories.csproj" />
     <ProjectReference Include="..\Delineat.Assistant.Core.Stores\Delineat.Assistant.Core.Stores.csproj" />
     <ProjectReference Include="..\Delineat.Assistant.Core.Tips.EML\Delineat.Assistant.Core.Tips.EML.csproj" />

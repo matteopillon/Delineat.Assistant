@@ -22,14 +22,60 @@ namespace Delineat.Assistant.Core.ObjectFactories
         public DWUser GetDWUser(User user)
         {
 
-            return user == null ? null : new DWUser()
+            var dwUser = user == null ? null : new DWUser()
             {
                 UserId = user.UserId,
                 Email = user.Email,
                 Firstname = user.FirstName,
                 Lastname = user.LastName,
                 Nickname = user.Nickname,
+                Roles = new DWRole[0]
+            };
 
+            if (user.Roles != null && user.Roles.Count > 0)
+            {
+                var roles = new List<DWRole>();
+                foreach (var role in user.Roles)
+                {
+                    roles.Add(GetDWRole(role));
+                }
+
+                dwUser.Roles = roles.ToArray();
+            }
+            return dwUser;
+        }
+
+        public DWRole GetDWRole(Role role)
+        {
+            var dwRole = new DWRole()
+            {
+                Description = role.Description,
+                Name = role.Name,
+                Permissions = new DWPermission[0],
+                RoleId = role.RoleId
+            };
+
+            if (role.Permissions != null && role.Permissions.Count > 0)
+            {
+                var permissions = new List<DWPermission>();
+                foreach (var permission in role.Permissions)
+                {
+                    permissions.Add(GetDWPermission(permission));
+                }
+
+                dwRole.Permissions = permissions.ToArray();
+            }
+
+            return dwRole;
+        }
+
+        public DWPermission GetDWPermission(Permission permission)
+        {
+            return new DWPermission()
+            {
+                Name = permission.Name,
+                Id = permission.Id,
+                Enabled = permission.Enabled
             };
         }
 
@@ -159,11 +205,11 @@ namespace Delineat.Assistant.Core.ObjectFactories
                 {
                     Description = subJob.Description,
                     Code = subJob.Code,
-                    Job = GetDWJob(subJob.Job,false),
+                    Job = GetDWJob(subJob.Job, false),
                     Parent = GetDWSubJob(subJob.Parent),
                     SubJobId = subJob.SubJobId,
                     IsDeleted = subJob.DeleteDate.HasValue,
-                    Customer = GetDWCustomer(subJob.Customer?? subJob.Job?.Customer)
+                    Customer = GetDWCustomer(subJob.Customer ?? subJob.Job?.Customer)
                 };
 
                 result.SubJobs = subJob.SubJobs?.Select(sj => GetDWSubJob(sj)).ToArray() ?? new DWSubJob[0];
@@ -411,7 +457,7 @@ namespace Delineat.Assistant.Core.ObjectFactories
             }
         }
 
-       
+
         public Topic GetDWTopic(DWTopic topic)
         {
             throw new NotImplementedException();

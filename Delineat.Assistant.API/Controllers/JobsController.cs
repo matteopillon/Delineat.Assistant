@@ -360,5 +360,32 @@ namespace Delineat.Assistant.API.Controllers
                 return Problem(ex);
             }
         }
+
+        private IQueryable<DayWorkLog> MakeDayWorkLogsQuery()
+        {
+            return assistantDBContext.DayWorkLogs.Include(w => w.Job)
+                .Include(w => w.User)
+                .Include(w => w.WorkType)
+                .Include(w => w.SubJob);
+        }
+
+        private IQueryable<DayWorkLog> MakeDayWorkLogsQueryWithDateRange(DateTime startDate, DateTime endDate, int jobId)
+        {
+            return MakeDayWorkLogsQuery()
+                .Where(d => d.Date.Date >= startDate && d.Date.Date <= endDate && d.Job.JobId == jobId).OrderBy(d=>d.Date);
+        }
+
+        [HttpGet("{jobId}/dayworklogs")]
+        public ActionResult<DWDayWorkLog[]> GetWorkLogs(DateTime startDate, DateTime endDate, int jobId)
+        {
+            try
+            {               
+                return MakeDayWorkLogsQueryWithDateRange(startDate, endDate, jobId).Select(d => dwObjectFactory.GetDWDayWorkLog(d)).ToArray();
+            }
+            catch (Exception ex)
+            {
+                return Problem(ex);
+            }
+        }
     }
 }

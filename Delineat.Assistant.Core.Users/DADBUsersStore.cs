@@ -1,6 +1,7 @@
 ﻿using Delineat.Assistant.Core.Data;
 using Delineat.Assistant.Core.ObjectFactories;
 using Delineat.Assistant.Models;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -39,12 +40,12 @@ namespace Delineat.Assistant.Core.Users
 
         public DWUser GetUser(int id)
         {
-            return dwObjectFactory.GetDWUser(dataContext.Users.FirstOrDefault(u => u.UserId == id));
+            return dwObjectFactory.GetDWUser(dataContext.Users.Include(u => u.Roles).ThenInclude(r => r.Permissions).FirstOrDefault(u => u.UserId == id));
         }
 
         public IEnumerable<DWUser> GetUsers()
         {
-            return dataContext.Users.Select(u => dwObjectFactory.GetDWUser(u));
+            return dataContext.Users.Include(u=>u.Roles).ThenInclude(r=>r.Permissions).Select(u => dwObjectFactory.GetDWUser(u));
         }
 
         public bool UpInsertUser(DWUser user)

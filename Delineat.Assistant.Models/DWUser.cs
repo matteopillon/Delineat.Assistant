@@ -8,15 +8,14 @@ namespace Delineat.Assistant.Models
 {
     public enum DWUserRole
     {
+        None,
         User,
-        Admin
+        Admin,
     }
 
     public class DWUser
     {
         public int UserId { get; set; }
-
-        public string Username { get; set; }
 
         public string Nickname { get; set; }
 
@@ -26,6 +25,22 @@ namespace Delineat.Assistant.Models
 
         public string Email { get; set; }
 
-        public DWUserRole Role { get; set; }
+        public DWRole[] Roles { get; set; }
+    }
+
+    public class DWRole
+    {
+        public int RoleId { get; set; }
+        public string Name { get; set; }
+        public string Description { get; set; }
+        public DWPermission[] Permissions { get; set; }
+    }
+
+
+    public class DWPermission
+    {
+        public string Id { get; set; }
+        public string Name { get; set; }
+        public bool Enabled { get; set; }
     }
 }

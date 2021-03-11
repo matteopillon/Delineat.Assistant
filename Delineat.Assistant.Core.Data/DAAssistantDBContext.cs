@@ -1,5 +1,8 @@
 ﻿using Delineat.Assistant.Core.Data.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Console;
+using Microsoft.Extensions.Logging.Debug;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -78,7 +81,7 @@ namespace Delineat.Assistant.Core.Data
             this.connectionString = connectionString;
         }
 
-      
+
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -87,7 +90,13 @@ namespace Delineat.Assistant.Core.Data
             if (!optionsBuilder.IsConfigured)
             {
                 optionsBuilder.UseSqlServer(this.connectionString);
+
+               
             }
+#if DEBUG
+            optionsBuilder.UseLoggerFactory(new LoggerFactory(new[] {
+                                                new DebugLoggerProvider() }));
+#endif
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)

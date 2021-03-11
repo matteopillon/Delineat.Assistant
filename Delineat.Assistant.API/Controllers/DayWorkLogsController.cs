@@ -35,10 +35,11 @@ namespace Delineat.Assistant.API.Controllers
                 .Include(w => w.SubJob);
         }
 
-        private IQueryable<DayWorkLog> MakeDayWorkLogsQueryWithDateRange(DateTime startDate, DateTime endDate)
+        private IQueryable<DayWorkLog> MakeDayWorkLogsQueryWithDateRange(DateTime startDate, DateTime endDate, int? userId =null)
         {
             return MakeDayWorkLogsQuery()
-                .Where(d => d.Date.Date >= startDate && d.Date.Date <= endDate);
+                .Where(d => !userId.HasValue ? d.Date.Date >= startDate && d.Date.Date <= endDate : 
+                                               d.Date.Date >= startDate && d.Date.Date <= endDate && d.User.UserId == userId.Value);
         }
 
         [HttpGet()]
@@ -46,13 +47,7 @@ namespace Delineat.Assistant.API.Controllers
         {
             try
             {
-                var query = MakeDayWorkLogsQueryWithDateRange(startDate, endDate);
-                if (userId.HasValue)
-                {
-                    query.Where(d => d.User.UserId == userId);
-                }
-
-                return query.Select(d => dwObjectFactory.GetDWDayWorkLog(d)).ToArray();
+                return MakeDayWorkLogsQueryWithDateRange(startDate, endDate, userId).Select(d => dwObjectFactory.GetDWDayWorkLog(d)).ToArray();
             }
             catch (Exception ex)
             {
@@ -142,7 +137,7 @@ namespace Delineat.Assistant.API.Controllers
                     {
                         if (Validate(FillFromRequest(log, data)))
                         {
-
+                            log.UpdateDate = DateTime.Now;
                             assistantDBContext.DayWorkLogs.Update(log);
                             assistantDBContext.SaveChanges();
 
@@ -182,7 +177,7 @@ namespace Delineat.Assistant.API.Controllers
                     var log = new DayWorkLog();
                     if (Validate(FillFromRequest(log, data)))
                     {
-
+                        log.InsertDate = DateTime.Now;
                         assistantDBContext.DayWorkLogs.Add(log);
                         assistantDBContext.SaveChanges();
 

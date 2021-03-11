@@ -93,6 +93,18 @@ namespace Delineat.Workflow.Core.SqlServer.Migrations
                     b.Property<DateTime>("Date")
                         .HasColumnType("datetime2");
 
+                    b.Property<DateTime?>("DeleteDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("ExportSyncId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("ImportSyncId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("InsertDate")
+                        .HasColumnType("datetime2");
+
                     b.Property<int?>("JobId")
                         .HasColumnType("int");
 
@@ -104,6 +116,9 @@ namespace Delineat.Workflow.Core.SqlServer.Migrations
 
                     b.Property<int?>("SubJobId")
                         .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdateDate")
+                        .HasColumnType("datetime2");
 
                     b.Property<int?>("UserId")
                         .HasColumnType("int");

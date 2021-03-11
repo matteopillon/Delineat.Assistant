@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Delineat.Assistant.Core.Data.Models
 {
-    public class DayWorkLog
+    public class DayWorkLog : BaseObject
     {
         [Key]
         public int DayWorkLogId { get; set; }
