@@ -29,10 +29,9 @@ namespace Delineat.Assistant.API.Controllers
 
         private IQueryable<DayWorkLog> MakeDayWorkLogsQuery()
         {
-            return assistantDBContext.DayWorkLogs.Include(w => w.Job)
+            return assistantDBContext.DayWorkLogs.Include(w => w.Job).ThenInclude(j=>j.Parent)
                 .Include(w => w.User)
-                .Include(w => w.WorkType)
-                .Include(w => w.SubJob);
+                .Include(w => w.WorkType);
         }
 
         private IQueryable<DayWorkLog> MakeDayWorkLogsQueryWithDateRange(DateTime startDate, DateTime endDate, int? userId =null)
@@ -92,8 +91,7 @@ namespace Delineat.Assistant.API.Controllers
             }
 
             log.Job = assistantDBContext.GetJob(data.JobId);
-            log.Minutes = data.Minutes;
-            log.SubJob = data.SubJobId > 0 ? assistantDBContext.GetSubJob(data.SubJobId) : null;
+            log.Minutes = data.Minutes;           
             log.User = assistantDBContext.GetUser(data.UserId);
             log.WorkType = assistantDBContext.GetDayWorkType(data.DayWorkTypeId);
             log.Note = data.Note;
@@ -108,7 +106,6 @@ namespace Delineat.Assistant.API.Controllers
             if (log.User == null) ModelState.AddModelError(nameof(log.User), "Utente non trovato");
             if (log.Minutes <= 0) ModelState.AddModelError(nameof(log.Minutes), "Le ore devono essere valorizzate");
             if (log.WorkType == null) ModelState.AddModelError(nameof(log.WorkType), "Il tipo di registrazione deve essere valorizzato");
-            if (log.SubJob?.Job != null && log.Job != null && log.Job.JobId != log.SubJob.Job.JobId) ModelState.AddModelError(nameof(log.SubJob), $"La sotto commessa {log.SubJob.Description} non appartiene alla commessa {log.Job.Description}");
             return ModelState.IsValid;
         }
 

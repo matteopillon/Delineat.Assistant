@@ -17,10 +17,13 @@ namespace Delineat.Assistant.Core.Data.Models
 
         public string Email { get; set; }
 
+        public bool HasPaySlip { get; set; }
         public ICollection<Role> Roles { get; set; }
 
         public ICollection<UserCredential> Credentials { get; set; }
 
         public ICollection<DayWorkLog> DayWorkLogs { get; set; }
+
+        public WeekWorkHours WeekWork { get; set; }
     }
 }

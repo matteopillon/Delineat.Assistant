@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace Delineat.Assistant.Models
 {
@@ -7,10 +8,11 @@ namespace Delineat.Assistant.Models
         #region Fields
         private readonly List<DWTag> tags = new List<DWTag>();
         private readonly List<DWTopic> topics = new List<DWTopic>();
+        private readonly List<DWJobExtraFieldValue> fields = new List<DWJobExtraFieldValue>();
         private List<DWItem> items = new List<DWItem>();
         private List<DWNote> notes = new List<DWNote>();
         private List<DWJobCode> codes = new List<DWJobCode>();
-        private List<DWSubJob> subJobs = new List<DWSubJob>();
+        private List<DWJob> subJobs = new List<DWJob>();
         
         #endregion
 
@@ -26,19 +28,20 @@ namespace Delineat.Assistant.Models
         public DWGroup Group { get; set; }
         public List<DWTag> Tags => tags;
 
+        public DWJob Parent  { get;set; }
         public List<DWTopic> Topics => topics;
 
         public List<DWItem> Items => items;
         public List<DWNote> Notes => notes;
         public List<DWJobCode> Codes => codes;
 
-        public List<DWSubJob> SubJobs => subJobs;
+        public List<DWJob> SubJobs => subJobs;
 
+        public List<DWJobExtraFieldValue> Fields => fields;
+        public DWJobCustomerInfo CustomerInfo { get; set; }     
 
-        public string CustomerInfo { get; set; }
-        public string OrderRef { get; set; }
-        public string QuotationRef { get; set; }
-
+        public bool IsDeleted { get; set; }
+        public DateTime? BeginDate { get; set; }
         #endregion
 
         public override string ToString()
@@ -53,5 +56,29 @@ namespace Delineat.Assistant.Models
             }
         }
 
+    }
+
+    public class DWJobCustomerInfo
+    {
+        public string Info { get; set; }
+        public string QuotationRef { get; set; }
+
+        public string OrderRef { get; set; }
+
+        public double Quotation { get; set; }
+
+        public double InvoiceAmount { get; set; }
+
+        public double OrderAmount { get; set; }
+
+        public DateTime? Completed { get; set; }
+
+        public DWUser CompletedBy { get; set; }
+
+        public DateTime? Sent { get; set; }
+
+        public DWUser SentBy { get; set; }
+
+        public DateTime? EstimatedClosingDate { get; set; }
     }
 }

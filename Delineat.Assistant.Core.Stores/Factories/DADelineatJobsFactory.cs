@@ -20,22 +20,30 @@ namespace Delineat.Assistant.Core.Stores.Factories
         }
         public string CreateFolderNameFromJob(DWJob job)
         {
-            if (job.Code != null && job.Code.Length == JOBID_VALID_LENGTH)
+            if (job.Parent == null)
             {
-                string jobId = string.Empty;
-                if (TryParseJobId(job.Code, out jobId))
+
+                if (job.Code != null && job.Code.Length == JOBID_VALID_LENGTH)
                 {
-                    if (string.IsNullOrEmpty(job.Path))
+                    string jobId = string.Empty;
+                    if (TryParseJobId(job.Code, out jobId))
                     {
-                        return $"{jobId}_{job.Description}";
-                    }
-                    else
-                    {
-                        return job.Path;
+                        if (string.IsNullOrEmpty(job.Path))
+                        {
+                            return $"{jobId}_{job.Description}";
+                        }
+                        else
+                        {
+                            return job.Path;
+                        }
                     }
                 }
+                return string.Empty;
             }
-            return string.Empty;
+            else
+            {
+                return $"{CreateFolderNameFromJob(job.Parent)}\\sc_{job.Code}";
+            }
         }
 
         private bool TryParseJobId(string value, out string jobID)

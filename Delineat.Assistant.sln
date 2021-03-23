@@ -21,12 +21,16 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Delineat.Assistant.Core.Use
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Delineat.Assistant.Core.ObjectFactories", "Delineat.Assistant.Core.ObjectFactories\Delineat.Assistant.Core.ObjectFactories.csproj", "{F2A29F45-65C2-4962-863C-D53057B16B31}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Delineat.MergeDB", "Delineat.MergeDB\Delineat.MergeDB.csproj", "{5EA5658A-D460-4A4B-8EDB-49D44697179A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Delineat.MergeDB", "Delineat.MergeDB\Delineat.MergeDB.csproj", "{5EA5658A-D460-4A4B-8EDB-49D44697179A}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{68E4EBCD-ACED-4E1C-B134-DC9D1559B6C5}"
 	ProjectSection(SolutionItems) = preProject
 		.editorconfig = .editorconfig
 	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Delineat.Assistant.Exports", "Delineat.Assistant.Exports\Delineat.Assistant.Exports.csproj", "{B59BDD6B-622B-4347-8BB4-324B8B054642}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Delineat.Tests", "Delineat.Tests\Delineat.Tests.csproj", "{277257B3-66F3-404E-8294-7F4D4A074792}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -74,6 +78,14 @@ Global
 		{5EA5658A-D460-4A4B-8EDB-49D44697179A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5EA5658A-D460-4A4B-8EDB-49D44697179A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5EA5658A-D460-4A4B-8EDB-49D44697179A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B59BDD6B-622B-4347-8BB4-324B8B054642}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B59BDD6B-622B-4347-8BB4-324B8B054642}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B59BDD6B-622B-4347-8BB4-324B8B054642}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B59BDD6B-622B-4347-8BB4-324B8B054642}.Release|Any CPU.Build.0 = Release|Any CPU
+		{277257B3-66F3-404E-8294-7F4D4A074792}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{277257B3-66F3-404E-8294-7F4D4A074792}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{277257B3-66F3-404E-8294-7F4D4A074792}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{277257B3-66F3-404E-8294-7F4D4A074792}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

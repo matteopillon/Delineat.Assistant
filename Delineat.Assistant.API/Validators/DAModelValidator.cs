@@ -47,31 +47,42 @@ namespace Delineat.Assistant.API.Validators
                 }
                 else
                 {
-                    job.Code = job.Code.Trim().ToUpper();
-                    //Verifico se il codice della commessa segue la regola XXXAA
-                    if (job.Code.Length == 5)
+                    if (job.Parent == null)
                     {
-                        var progressivo = 0;
-                        if (!int.TryParse(job.Code.Substring(0, 3), out progressivo))
+                        job.Code = job.Code.Trim().ToUpper();
+                        //Verifico se il codice della commessa segue la regola XXXAA
+                        if (job.Code.Length == 5)
                         {
-                            result.AddError("I primi tre caratteri del codice commessa devono essere numerici");
+                            var progressivo = 0;
+                            if (!int.TryParse(job.Code.Substring(0, 3), out progressivo))
+                            {
+                                result.AddError("I primi tre caratteri del codice commessa devono essere numerici");
+                            }
+                            else
+                            {
+                                if (job.JobId == 0)
+                                {
+                                    //Verifico che non esistà già una commessa con il codice
+                                    var existingJob = store.GetJobs().Where(j => j.Code.ToUpper() == job.Code).FirstOrDefault();
+                                    if (existingJob != null)
+                                    {
+                                        result.AddError($"Esiste già la commessa {existingJob.Description} con codice {existingJob.Code}");
+                                    }
+                                }
+                            }
                         }
                         else
                         {
-                            if (job.JobId == 0)
-                            {
-                                //Verifico che non esistà già una commessa con il codice
-                                var existingJob = store.GetJobs().Where(j => j.Code.ToUpper() == job.Code).FirstOrDefault();
-                                if (existingJob != null)
-                                {
-                                    result.AddError($"Esiste già la commessa {existingJob.Description} con codice {existingJob.Code}");
-                                }
-                            }
+                            result.AddError("Il codice della commessa deve essere lungo 5 caratteri");
                         }
                     }
                     else
                     {
-                        result.AddError("Il codice della commessa deve essere lungo 5 caratteri");
+                        var existingJob = store.GetJobs().Where(j => j.Code.ToUpper() == job.Code && job.Parent?.JobId == job.Parent.JobId).FirstOrDefault();
+                        if (existingJob != null)
+                        {
+                            result.AddError($"Esiste già la sotto commessa {existingJob.Description} con codice {existingJob.Code}");
+                        }
                     }
                 }
 

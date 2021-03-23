@@ -1,17 +1,27 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using Delineat.Assistant.Models;
 
 namespace Delineat.Assistant.API.Models
 {
-    public class DAJobRequest
+
+    public class DAJobRequest 
     {
         public string Code { get; set; }
         public string Description { get; set; }
-        public string CustomerInfo { get; set; }
-        public string QuotationRef { get; set; }
-        public string OrderRef  { get; set; }
+        public DWJobCustomerInfo CustomerInfo { get; set; }       
         public int CustomerId { get; set; }
+
+        public DAJobFieldValue[] Fields { get; set; }
+    }
+
+    public class DAAddJobRequest
+    {        
+        public DAJobRequest Job { get; set; }
+        public int? ParentId { get; set; }
+    }
+
+    public class DAJobFieldValue:DWExtraFieldValue
+    {
+        public int FieldId { get; set; }
+        public int? JobFieldId { get; set; }
     }
 }

@@ -5,4 +5,8 @@
     <Configurations>Debug;Release;DebugStaging;ReleaseStaging</Configurations>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Delineat.Assistant.Core.Data\Delineat.Assistant.Core.Data.csproj" />
+  </ItemGroup>
+
 </Project>

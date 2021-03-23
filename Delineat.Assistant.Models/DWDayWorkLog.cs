@@ -17,6 +17,5 @@ namespace Delineat.Assistant.Models
         public int Minutes { get; set; }
 
         public DWDayWorkType WorkType { get; set; }
-        public DWSubJob SubJob { get; set; }
     }
 }

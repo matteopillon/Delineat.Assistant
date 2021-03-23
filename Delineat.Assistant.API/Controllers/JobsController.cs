@@ -27,6 +27,7 @@ namespace Delineat.Assistant.API.Controllers
         private readonly IMemoryCache memoryCache;
         private const string kJobsCacheKey = "JOBS_CACHE_KEY";
         private readonly DADWObjectFactory dwObjectFactory;
+        private readonly DADataObjectFactory dataObjectFactory;
 
         public DAAssistantDBContext assistantDBContext { get; }
 
@@ -35,6 +36,7 @@ namespace Delineat.Assistant.API.Controllers
             ILogger<JobsController> logger, IMemoryCache memoryCache) : base(store, logger)
         {
             this.dwObjectFactory = new DADWObjectFactory(assistantDBContext);
+            this.dataObjectFactory = new DADataObjectFactory(assistantDBContext);
             this.assistantDBContext = assistantDBContext;
             this.memoryCache = memoryCache;
         }
@@ -124,7 +126,26 @@ namespace Delineat.Assistant.API.Controllers
             return ModelState.IsValid;
         }
 
-        private bool Validate(DAJobRequest data, int? id = null)
+        private bool Validate(DAAddJobRequest data)
+        {
+
+
+            if (data.ParentId.HasValue)
+            {
+                var parentJob = assistantDBContext.GetJob(data.ParentId.Value);
+                if (parentJob == null)
+                {
+                    ModelState.AddModelError(nameof(data.ParentId), "Commessa padre non trovata");
+                }
+            }
+
+            ValidateBase(data.Job, data.ParentId);
+
+            return ModelState.IsValid;
+        }
+
+
+        private bool ValidateBase(DAJobRequest data, int? parentId = null)
         {
             if (data == null) ModelState.AddModelError(nameof(data), "Commessa non valorizzato");
             if (string.IsNullOrWhiteSpace(data.Code))
@@ -141,7 +162,10 @@ namespace Delineat.Assistant.API.Controllers
             }
             if (data.CustomerId == 0)
             {
-                ModelState.AddModelError(nameof(Job.Customer), "Cliente commessa non valorizzato");
+                if (!parentId.HasValue)
+                {
+                    ModelState.AddModelError(nameof(Job.Customer), "Cliente commessa non valorizzato");
+                }
             }
             else
             {
@@ -153,29 +177,55 @@ namespace Delineat.Assistant.API.Controllers
                 }
             }
 
-
-
             return ModelState.IsValid;
         }
+
+
         private Job FillFromRequest(Job job, DAJobRequest data)
         {
 
             job.Code = data.Code;
             job.Customer = data.CustomerId > 0 ? assistantDBContext.GetCustomer(data.CustomerId) : null;
             job.Description = data.Description;
-            job.CustomerInfo = data.Description;
-            job.OrderRef = data.OrderRef;
-            job.QuotationRef = data.QuotationRef;
+            if (data.CustomerInfo != null)
+            {
+                job.CustomerInfo = new JobCustomerInfo()
+                {
+                    EstimatedClosingDate = data.CustomerInfo.EstimatedClosingDate,
+                    Info = data.CustomerInfo.Info,
+                    InvoiceAmount = data.CustomerInfo.InvoiceAmount,
+                    OrderAmount = data.CustomerInfo.OrderAmount,
+                    OrderRef = data.CustomerInfo.OrderRef,
+                    Quotation = data.CustomerInfo.Quotation,
+                    QuotationRef = data.CustomerInfo.QuotationRef,
+                };
+            }
+
 
             return job;
         }
+
+
+        private Job FillFromAddRequest(Job job, DAAddJobRequest data)
+        {
+
+            FillFromRequest(job, data.Job);
+            if (data.ParentId.HasValue)
+            {
+                job.Parent = assistantDBContext.GetJob(data.ParentId.Value);
+                if (job.Customer == null) job.Customer = job.Parent.Customer;
+            }
+
+            return job;
+        }
+
         [HttpPut("{id}")]
         public ActionResult<DWJob> SaveJob(int id, DAJobRequest job)
         {
 
             try
             {
-                if (Validate(job))
+                if (ValidateBase(job))
                 {
                     var dbJob = assistantDBContext.GetJob(id);
                     if (dbJob != null)
@@ -188,7 +238,31 @@ namespace Delineat.Assistant.API.Controllers
                             //Tolgo dalla cache, dovrà essere ricaricata
                             memoryCache?.Remove(kJobsCacheKey);
                             if (result.Stored)
+                            {
+
+                                if (job.Fields != null)
+                                {
+                                    foreach (var field in job.Fields)
+                                    {
+                                        JobExtraFieldValue currentFieldValue = dbJob.Fields.FirstOrDefault(f => f.Id == field.JobFieldId);
+                                        if (currentFieldValue == null) currentFieldValue = dbJob.Fields.FirstOrDefault(f => f.ExtraField.Id == field.FieldId);
+                                        if (currentFieldValue == null)
+                                        {
+                                            currentFieldValue = new JobExtraFieldValue();
+                                            currentFieldValue.ExtraField = assistantDBContext.ExtraFields.FirstOrDefault(f => f.Id == field.FieldId);
+
+                                            if (currentFieldValue.ExtraField != null)
+                                            {
+                                                dbJob.Fields.Add(currentFieldValue);
+                                            }
+                                        }                                       
+                                        SetExtraFieldValues(currentFieldValue, field);
+                                    }
+                                    assistantDBContext.Jobs.Update(dbJob);
+                                    assistantDBContext.SaveChanges();
+                                }
                                 return dwJob;
+                            }
                             else
                             {
                                 foreach (var message in result.ErrorMessages)
@@ -197,8 +271,6 @@ namespace Delineat.Assistant.API.Controllers
                                 }
                                 return BadRequest(ModelState);
                             }
-
-
                         }
                         else
                         {
@@ -210,6 +282,7 @@ namespace Delineat.Assistant.API.Controllers
                         return NotFound();
                     }
                 }
+
                 else
                 {
                     return BadRequest(ModelState);
@@ -221,9 +294,34 @@ namespace Delineat.Assistant.API.Controllers
             }
         }
 
+        private void SetExtraFieldValues(JobExtraFieldValue extraFieldValue, DAJobFieldValue field)
+        {
+            if (extraFieldValue == null || extraFieldValue.ExtraField == null) return;
+            switch (extraFieldValue.ExtraField.Type)
+            {
+                case ExtraFieldType.Bool:
+                    var boolData = field.NumberValue == 1;
+                    extraFieldValue.NumberValue = field.NumberValue;
+                    extraFieldValue.TextValue = boolData ? "SI" : "NO";
+                    break;
+                case ExtraFieldType.Date:
+                    extraFieldValue.DateTimeValue = field.DateTimeValue ;
+                    extraFieldValue.TextValue = extraFieldValue.DateTimeValue.HasValue ? extraFieldValue.DateTimeValue.Value.ToString("dd/MM/yyyy HH:mm:ss") : string.Empty;
+                    extraFieldValue.NumberValue = extraFieldValue.DateTimeValue.HasValue ? extraFieldValue.DateTimeValue.Value.Ticks : 0;
+                    break;
+                case ExtraFieldType.Numeric:
+                    extraFieldValue.NumberValue = field.NumberValue;
+                    extraFieldValue.TextValue = extraFieldValue.NumberValue.ToString();
+                    break;
+                default:
+                    extraFieldValue.TextValue = field.TextValue;
+                    break;
+
+            }
+        }
 
         [HttpPost()]
-        public ActionResult<DWJob> InsertJob(DAJobRequest job)
+        public ActionResult<DWJob> InsertJob(DAAddJobRequest job)
         {
 
             try
@@ -231,7 +329,7 @@ namespace Delineat.Assistant.API.Controllers
                 if (Validate(job))
                 {
 
-                    var dwJob = this.dwObjectFactory.GetDWJob(FillFromRequest(new Job(), job));
+                    var dwJob = this.dwObjectFactory.GetDWJob(FillFromAddRequest(new Job(), job), false);
                     var validation = new DAModelValidator(Store).Validate(dwJob);
                     if (validation.IsValid)
                     {
@@ -343,17 +441,35 @@ namespace Delineat.Assistant.API.Controllers
             }
         }
 
-        [HttpGet("jobs/{jobId}/subjobs")]
-        public ActionResult<DWSubJob[]> GetSubJobs(int jobId)
+        [HttpGet("{jobId}/subjobs")]
+        public ActionResult<DWJob[]> GetSubJobs(int jobId)
         {
             try
             {
-                var subJobs = assistantDBContext.SubJobs
-                    .Include(sj => sj.Job).ThenInclude(j => j.Customer)
+                var subJobs = assistantDBContext.Jobs
+                    .Include(sj => sj.Parent).ThenInclude(j => j.Customer)
                     .Include(sj => sj.Customer)
-                    .Where(sj => sj.Job.JobId == jobId)
-                    .Select(sj => dwObjectFactory.GetDWSubJob(sj));
+                    .Where(sj => sj.Parent.JobId == jobId)
+                    .Select(sj => dwObjectFactory.GetDWJob(sj, false));
                 return subJobs.ToArray();
+            }
+            catch (Exception ex)
+            {
+                return Problem(ex);
+            }
+        }
+
+        [HttpGet("{jobId}/fields")]
+        public ActionResult<DWJobExtraFieldValue[]> GetJobExtraFields(int jobId)
+        {
+            try
+            {
+                var fields = assistantDBContext.JobExtraFields
+                    .Include(f => f.ExtraField).ThenInclude(ef => ef.ValuesDomain)
+                    .Where(f => f.Job.JobId == jobId)
+                    .OrderBy(f => f.ExtraField.Order)
+                    .Select(sj => dwObjectFactory.GetDWJobField(sj));
+                return fields.ToArray();
             }
             catch (Exception ex)
             {
@@ -363,23 +479,22 @@ namespace Delineat.Assistant.API.Controllers
 
         private IQueryable<DayWorkLog> MakeDayWorkLogsQuery()
         {
-            return assistantDBContext.DayWorkLogs.Include(w => w.Job)
+            return assistantDBContext.DayWorkLogs.Include(w => w.Job).ThenInclude(j => j.Parent)
                 .Include(w => w.User)
-                .Include(w => w.WorkType)
-                .Include(w => w.SubJob);
+                .Include(w => w.WorkType);
         }
 
         private IQueryable<DayWorkLog> MakeDayWorkLogsQueryWithDateRange(DateTime startDate, DateTime endDate, int jobId)
         {
             return MakeDayWorkLogsQuery()
-                .Where(d => d.Date.Date >= startDate && d.Date.Date <= endDate && d.Job.JobId == jobId).OrderBy(d=>d.Date);
+                .Where(d => d.Date.Date >= startDate && d.Date.Date <= endDate && d.Job.JobId == jobId).OrderBy(d => d.Date);
         }
 
         [HttpGet("{jobId}/dayworklogs")]
         public ActionResult<DWDayWorkLog[]> GetWorkLogs(DateTime startDate, DateTime endDate, int jobId)
         {
             try
-            {               
+            {
                 return MakeDayWorkLogsQueryWithDateRange(startDate, endDate, jobId).Select(d => dwObjectFactory.GetDWDayWorkLog(d)).ToArray();
             }
             catch (Exception ex)

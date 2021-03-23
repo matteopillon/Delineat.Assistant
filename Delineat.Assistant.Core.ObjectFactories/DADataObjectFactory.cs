@@ -17,6 +17,7 @@ namespace Delineat.Assistant.Core.ObjectFactories
 
         public User GetDBUser(DWUser user)
         {
+            if (user == null) return null;
             return new User()
             {
                 UserId = user.UserId,
@@ -60,18 +61,39 @@ namespace Delineat.Assistant.Core.ObjectFactories
 
         public Job GetDBJob(DWJob job)
         {
+            if (job == null) return null;
             Job dbJob = new Job()
             {
                 JobId =job.JobId,
                 InsertDate = DateTime.Now,
                 Description = job.Description,
+                BeginDate = job.BeginDate,
                 Code = job.Code,
                 Customer = job.Customer != null ? dbContext.Customers.FirstOrDefault(c=>c.CustomerId == job.Customer.CustomerId): null,
-                CustomerInfo = job.CustomerInfo,
-                OrderRef = job.OrderRef,
-                QuotationRef = job.QuotationRef,
-
+               
             };
+
+           
+
+            if (job.CustomerInfo != null)
+            {
+                dbJob.CustomerInfo = new JobCustomerInfo()
+                {
+                    Completed = job.CustomerInfo.Completed,
+                    CompletedBy = GetDBUser(job.CustomerInfo.CompletedBy),
+                    EstimatedClosingDate = job.CustomerInfo.EstimatedClosingDate,
+                    Info = job.CustomerInfo.Info,
+                    InvoiceAmount = job.CustomerInfo.InvoiceAmount,
+                    OrderAmount = job.CustomerInfo.OrderAmount,
+                    OrderRef = job.CustomerInfo.QuotationRef,
+                    Quotation = job.CustomerInfo.Quotation,
+                    QuotationRef = job.CustomerInfo.QuotationRef,
+                    Sent = job.CustomerInfo.Sent,
+                    SentBy = GetDBUser(job.CustomerInfo.SentBy)
+                };
+            }
+
+           
 
             return dbJob;
         }

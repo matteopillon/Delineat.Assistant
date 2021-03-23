@@ -69,8 +69,10 @@ namespace Delineat.Assistant.Core.Stores
                 .Include(j => j.Topics)
                 .Include(j => j.Customer)
                 .Include(j => j.Codes)
+                .Include(j => j.Parent)              
                 .Include(j => j.SubJobs).ThenInclude(sj => sj.Customer)
-                .Include(j => j.Tags).ThenInclude(t => t.Tag).Where(j => !j.DeleteDate.HasValue);
+                .Include(j => j.SubJobs).ThenInclude(sj => sj.Parent)
+                .Include(j => j.Tags).ThenInclude(t => t.Tag);
         }
 
         private Job GetJobFromId(int jobId)
@@ -204,7 +206,7 @@ namespace Delineat.Assistant.Core.Stores
 
         public List<DWJob> GetJobs()
         {
-            List<Job> jobs = GetJobsQuery().ToList();
+            List<Job> jobs = GetJobsQuery().Where(j => !j.DeleteDate.HasValue && j.Parent == null).ToList();
 
             bool saveChanges = false;
             foreach (var job in jobs.Where(j => j.Path == null))
@@ -404,8 +406,16 @@ namespace Delineat.Assistant.Core.Stores
                 {
                     var context = this.dataContext;
                     dbJob = dataObjectFactory.GetDBJob(job);
-
-                    dbJob.Group = AssertCurrentGroup();
+                    if (job.Parent == null)
+                    {
+                        dbJob.Group = AssertCurrentGroup();
+                    }
+                    else
+                    {
+                        var parentJob = GetJobFromId(job.Parent.JobId);
+                        dbJob.Group = parentJob?.Group;
+                        dbJob.Parent = parentJob;
+                    }
 
 
                     dataContext.Add(dbJob);
@@ -420,7 +430,10 @@ namespace Delineat.Assistant.Core.Stores
                 dbJob.Description = job.Description;
                 dbJob.Code = job.Code;
                 if (dbJob.Codes == null) dbJob.Codes = new List<JobCode>();
-
+                if (job.Customer!= null && dbJob.Customer !=null && job.Customer.CustomerId != dbJob.Customer?.CustomerId )
+                {
+                    dbJob.Customer = dataContext.Customers.FirstOrDefault(c => c.CustomerId == job.Customer.CustomerId);
+                }
 
                 List<JobCode> codesToAdd = new List<JobCode>();
                 List<JobCode> codesToRemove = new List<JobCode>();

@@ -6,6 +6,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Controllers\SubJobsController.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Include="..\.editorconfig" Link=".editorconfig" />
   </ItemGroup>
 
@@ -16,6 +20,7 @@
     <ProjectReference Include="..\Delineat.Assistant.Core.Tips\Delineat.Assistant.Core.Tips.csproj" />
     <ProjectReference Include="..\Delineat.Assistant.Core.Users\Delineat.Assistant.Core.Users.csproj" />
     <ProjectReference Include="..\Delineat.Assistant.Core\Delineat.Assistant.Core.csproj" />
+    <ProjectReference Include="..\Delineat.Assistant.Exports\Delineat.Assistant.Exports.csproj" />
     <ProjectReference Include="..\Delineat.Assistant.Models\Delineat.Assistant.Models.csproj" />
   </ItemGroup>
 

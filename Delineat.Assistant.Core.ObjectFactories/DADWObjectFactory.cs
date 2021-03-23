@@ -21,7 +21,7 @@ namespace Delineat.Assistant.Core.ObjectFactories
 
         public DWUser GetDWUser(User user)
         {
-
+            if (user == null) return null;
             var dwUser = user == null ? null : new DWUser()
             {
                 UserId = user.UserId,
@@ -88,12 +88,15 @@ namespace Delineat.Assistant.Core.ObjectFactories
                     JobId = job.JobId,
                     Code = job.Code,
                     Description = job.Description,
+                    BeginDate = job.BeginDate,
                     Path = job.Path,
-                    CustomerInfo = job.CustomerInfo,
-                    OrderRef = job.OrderRef,
-                    QuotationRef = job.QuotationRef,
-                    Group = GetDWJobGroup(job.Group)
+                    IsDeleted = job.DeleteDate.HasValue,
+                    CustomerInfo = GetDWCustomerInfo(job.CustomerInfo),
+                    Group = GetDWJobGroup(job.Group),
+                    Parent = GetDWJob(job.Parent, false)
                 };
+
+
                 if (job.Customer != null)
                 {
                     dwJob.Customer = GetDWCustomer(job.Customer);
@@ -124,15 +127,74 @@ namespace Delineat.Assistant.Core.ObjectFactories
                     }
                 }
 
+                if (job.Fields != null)
+                {
+                    foreach (var field in job.Fields)
+                    {
+                        dwJob.Fields.Add(GetDWJobField(field));
+                    }
+                }
+
                 if (includeSubJobs && job.SubJobs != null)
                 {
                     foreach (var subJob in job.SubJobs)
                     {
-                        dwJob.SubJobs.Add(GetDWSubJob(subJob));
+                        dwJob.SubJobs.Add(GetDWJob(subJob));
                     }
                 }
 
                 return dwJob;
+            }
+            else
+            {
+                return null;
+            }
+        }
+
+        public DWJobExtraFieldValue GetDWJobField(JobExtraFieldValue field)
+        {
+            if (field == null) return null;
+            return new DWJobExtraFieldValue()
+            {
+                DateTimeValue = field.DateTimeValue,
+                ExtraField = GetDWExtraField(field.ExtraField),
+                Id = field.Id,
+                NumberValue = field.NumberValue,
+                TextValue = field.TextValue
+            };
+        }
+
+        public DWExtraField GetDWExtraField(ExtraField extraField)
+        {
+            if (extraField == null) return null;
+            return new DWExtraField()
+            {
+                Id = extraField.Id,
+                Description = extraField.Description,
+                Label = extraField.Label,
+                Type = (DWExtraFieldType)(int)extraField.Type,
+                ValidationExpression = extraField.ValidationExpression
+            };
+        }
+
+        public DWJobCustomerInfo GetDWCustomerInfo(JobCustomerInfo customerInfo)
+        {
+            if (customerInfo != null)
+            {
+                return new DWJobCustomerInfo()
+                {
+                    Completed = customerInfo.Completed,
+                    CompletedBy = GetDWUser(customerInfo.CompletedBy),
+                    EstimatedClosingDate = customerInfo.EstimatedClosingDate,
+                    Info = customerInfo.Info,
+                    InvoiceAmount = customerInfo.InvoiceAmount,
+                    OrderAmount = customerInfo.OrderAmount,
+                    OrderRef = customerInfo.QuotationRef,
+                    Quotation = customerInfo.Quotation,
+                    QuotationRef = customerInfo.QuotationRef,
+                    Sent = customerInfo.Sent,
+                    SentBy = GetDWUser(customerInfo.SentBy)
+                };
             }
             else
             {
@@ -187,8 +249,7 @@ namespace Delineat.Assistant.Core.ObjectFactories
                     Job = GetDWJob(dayWorkLog.Job),
                     Minutes = dayWorkLog.Minutes,
                     User = GetDWUser(dayWorkLog.User),
-                    WorkType = GetDWDayWorkType(dayWorkLog.WorkType),
-                    SubJob = GetDWSubJob(dayWorkLog.SubJob)
+                    WorkType = GetDWDayWorkType(dayWorkLog.WorkType)
                 };
             }
             else
@@ -197,32 +258,9 @@ namespace Delineat.Assistant.Core.ObjectFactories
             }
         }
 
-        public DWSubJob GetDWSubJob(SubJob subJob)
-        {
-            if (subJob != null)
-            {
-                var result = new DWSubJob()
-                {
-                    Description = subJob.Description,
-                    Code = subJob.Code,
-                    Job = GetDWJob(subJob.Job, false),
-                    Parent = GetDWSubJob(subJob.Parent),
-                    SubJobId = subJob.SubJobId,
-                    IsDeleted = subJob.DeleteDate.HasValue,
-                    Customer = GetDWCustomer(subJob.Customer ?? subJob.Job?.Customer)
-                };
 
-                result.SubJobs = subJob.SubJobs?.Select(sj => GetDWSubJob(sj)).ToArray() ?? new DWSubJob[0];
 
-                return result;
-            }
-            else
-            {
-                return null;
-            }
-        }
-
-        private DWGroup GetDWJobGroup(JobGroup group)
+        public DWGroup GetDWJobGroup(JobGroup group)
         {
             if (group != null)
             {
@@ -234,7 +272,7 @@ namespace Delineat.Assistant.Core.ObjectFactories
             }
         }
 
-        private DWJobCode GetDWJobCode(JobCode code)
+        public DWJobCode GetDWJobCode(JobCode code)
         {
             return new DWJobCode() { Code = code.Code, CodeId = code.CodeId, Note = code.Note };
         }

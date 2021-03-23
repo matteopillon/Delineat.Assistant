@@ -61,8 +61,7 @@ namespace Delineat.Assistant.Core.Data
 
         public DbSet<DayWorkType> DayWorkTypes { get; set; }
 
-        public DbSet<SubJob> SubJobs { get; set; }
-
+       
         public DbSet<Role> Roles { get; set; }
 
         public DbSet<UserCredential> UserCredentials { get; set; }
@@ -70,6 +69,17 @@ namespace Delineat.Assistant.Core.Data
         public DbSet<Permission> Permissions { get; set; }
 
         public DbSet<JobType> JobTypes { get; set; }
+
+        public DbSet<WeekWorkHours> WeekWorkHours { get; set; }
+
+
+        public DbSet<HolidayDate> HolidayDates { get; set; }
+
+        public DbSet<ExtraField> ExtraFields { get; set; }
+
+        public DbSet<ExtraFieldDomainValue> ExtraFieldValues { get; set; }
+
+        public DbSet<JobExtraFieldValue> JobExtraFields { get; set; }
 
         public DAAssistantDBContext(DbContextOptions<DAAssistantDBContext> contextOptions) : base(contextOptions)
         {
@@ -106,6 +116,9 @@ namespace Delineat.Assistant.Core.Data
             modelBuilder.Entity<Document>().ToTable(nameof(Documents));
             modelBuilder.Entity<Item>().ToTable(nameof(Items));
             modelBuilder.Entity<Job>().ToTable(nameof(Jobs));
+
+
+            modelBuilder.Entity<Job>().OwnsOne(j => j.CustomerInfo);
             modelBuilder.Entity<Note>().ToTable(nameof(Notes));
             modelBuilder.Entity<NotesReminderRecipient>().ToTable(nameof(NotesReminderRecipients));
             modelBuilder.Entity<Specification>().ToTable(nameof(Specifications));
@@ -127,7 +140,6 @@ namespace Delineat.Assistant.Core.Data
 
             modelBuilder.Entity<DayWorkLog>().ToTable(nameof(DayWorkLogs));
             modelBuilder.Entity<DayWorkType>().ToTable(nameof(DayWorkTypes));
-            modelBuilder.Entity<SubJob>().ToTable(nameof(SubJobs));
 
             modelBuilder.Entity<Permission>().ToTable(nameof(Permissions));
 
@@ -135,6 +147,14 @@ namespace Delineat.Assistant.Core.Data
 
             modelBuilder.Entity<Role>().ToTable(nameof(Roles));
             modelBuilder.Entity<JobType>().ToTable(nameof(JobTypes));
+            modelBuilder.Entity<WeekWorkHours>().ToTable(nameof(WeekWorkHours));
+            modelBuilder.Entity<HolidayDate>().ToTable(nameof(HolidayDates));
+
+            modelBuilder.Entity<ExtraField>().ToTable(nameof(ExtraFields));
+            modelBuilder.Entity<ExtraFieldDomainValue>().ToTable(nameof(ExtraFieldValues));
+            modelBuilder.Entity<JobExtraFieldValue>().ToTable(nameof(JobExtraFields));
+
+
 
             #region Notes
             modelBuilder.Entity<DocumentsNotes>().HasKey(ot => new { ot.DocumentId, ot.NoteId });
@@ -232,6 +252,9 @@ namespace Delineat.Assistant.Core.Data
               .HasOne(ot => ot.Job)
               .WithMany(o => o.WorkLogs)
               .HasForeignKey(ot => ot.JobId);
+
+
+           
             #endregion
 
             #region JobCodes

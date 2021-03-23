@@ -20,9 +20,7 @@ namespace Delineat.Assistant.Core.Data.Models
 
         public int Minutes { get; set; }
 
-        public DayWorkType WorkType { get; set; }
-
-        public SubJob SubJob { get; set; }
+        public DayWorkType WorkType { get; set; }      
 
         public string Note { get; set; }
     }

@@ -443,6 +443,7 @@ namespace Delineat.Assistant.Core.Stores
         public bool SyncJob(DWJob job)
         {
 
+
             foreach (var jobsFactory in jobsFactories)
             {
                 var jobFolderName = jobsFactory.CreateFolderNameFromJob(job);
@@ -454,6 +455,7 @@ namespace Delineat.Assistant.Core.Stores
                         dir.Create();
                 }
             };
+
             return true;
         }
 

@@ -10,8 +10,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Delineat.Workflow.Core.SqlServer.Migrations
 {
     [DbContext(typeof(DAAssistantDBContext))]
-    [Migration("20210219111823_Customers")]
-    partial class Customers
+    [Migration("20210322091643_ExtraFields")]
+    partial class ExtraFields
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -95,14 +95,29 @@ namespace Delineat.Workflow.Core.SqlServer.Migrations
                     b.Property<DateTime>("Date")
                         .HasColumnType("datetime2");
 
+                    b.Property<DateTime?>("DeleteDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("ExportSyncId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("ImportSyncId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("InsertDate")
+                        .HasColumnType("datetime2");
+
                     b.Property<int?>("JobId")
                         .HasColumnType("int");
 
-                    b.Property<int?>("SubJobId")
+                    b.Property<int>("Minutes")
                         .HasColumnType("int");
 
-                    b.Property<TimeSpan>("Time")
-                        .HasColumnType("time");
+                    b.Property<string>("Note")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("UpdateDate")
+                        .HasColumnType("datetime2");
 
                     b.Property<int?>("UserId")
                         .HasColumnType("int");
@@ -113,8 +128,6 @@ namespace Delineat.Workflow.Core.SqlServer.Migrations
                     b.HasKey("DayWorkLogId");
 
                     b.HasIndex("JobId");
-
-                    b.HasIndex("SubJobId");
 
                     b.HasIndex("UserId");
 
@@ -372,6 +385,101 @@ namespace Delineat.Workflow.Core.SqlServer.Migrations
                     b.ToTable("DocumentsWorkLogs");
                 });
 
+            modelBuilder.Entity("Delineat.Assistant.Core.Data.Models.ExtraField", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<string>("Description")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Label")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ValidationExpression")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("ExtraFields");
+                });
+
+            modelBuilder.Entity("Delineat.Assistant.Core.Data.Models.ExtraFieldDomainValue", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<DateTime>("DateTimeValue")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("DeleteDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("ExportSyncId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("ExtraFieldId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("ImportSyncId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("InsertDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<double>("NumberValue")
+                        .HasColumnType("float");
+
+                    b.Property<string>("TextValue")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("UpdateDate")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ExtraFieldId");
+
+                    b.ToTable("ExtraFieldValues");
+                });
+
+            modelBuilder.Entity("Delineat.Assistant.Core.Data.Models.HolidayDate", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<int>("Day")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("FormulaId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Minutes")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Month")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Year")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("HolidayDates");
+                });
+
             modelBuilder.Entity("Delineat.Assistant.Core.Data.Models.Item", b =>
                 {
                     b.Property<int>("ItemId")
@@ -489,14 +597,14 @@ namespace Delineat.Workflow.Core.SqlServer.Migrations
                         .HasColumnType("int")
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
+                    b.Property<DateTime?>("BeginDate")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("Code")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<int?>("CustomerId")
                         .HasColumnType("int");
-
-                    b.Property<string>("CustomerInfo")
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime?>("DeleteDate")
                         .HasColumnType("datetime2");
@@ -516,13 +624,13 @@ namespace Delineat.Workflow.Core.SqlServer.Migrations
                     b.Property<DateTime>("InsertDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("OrderRef")
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<bool>("IsAbsence")
+                        .HasColumnType("bit");
+
+                    b.Property<int?>("ParentJobId")
+                        .HasColumnType("int");
 
                     b.Property<string>("Path")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("QuotationRef")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime?>("UpdateDate")
@@ -533,6 +641,8 @@ namespace Delineat.Workflow.Core.SqlServer.Migrations
                     b.HasIndex("CustomerId");
 
                     b.HasIndex("GroupId");
+
+                    b.HasIndex("ParentJobId");
 
                     b.ToTable("Jobs");
                 });
@@ -560,6 +670,52 @@ namespace Delineat.Workflow.Core.SqlServer.Migrations
                     b.ToTable("JobCodes");
                 });
 
+            modelBuilder.Entity("Delineat.Assistant.Core.Data.Models.JobExtraFieldValue", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<DateTime>("DateTimeValue")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("DeleteDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("ExportSyncId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("ExtraFieldId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("ImportSyncId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("InsertDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("JobId")
+                        .HasColumnType("int");
+
+                    b.Property<double>("NumberValue")
+                        .HasColumnType("float");
+
+                    b.Property<string>("TextValue")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("UpdateDate")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ExtraFieldId");
+
+                    b.HasIndex("JobId");
+
+                    b.ToTable("JobExtraFields");
+                });
+
             modelBuilder.Entity("Delineat.Assistant.Core.Data.Models.JobGroup", b =>
                 {
                     b.Property<int>("GroupId")
@@ -579,6 +735,24 @@ namespace Delineat.Workflow.Core.SqlServer.Migrations
                     b.HasKey("GroupId");
 
                     b.ToTable("JobGroups");
+                });
+
+            modelBuilder.Entity("Delineat.Assistant.Core.Data.Models.JobType", b =>
+                {
+                    b.Property<int>("JobTypeId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<string>("Color")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("JobTypeId");
+
+                    b.ToTable("JobTypes");
                 });
 
             modelBuilder.Entity("Delineat.Assistant.Core.Data.Models.JobsNotes", b =>
@@ -874,31 +1048,6 @@ namespace Delineat.Workflow.Core.SqlServer.Migrations
                     b.ToTable("StoreSyncLogEntries");
                 });
 
-            modelBuilder.Entity("Delineat.Assistant.Core.Data.Models.SubJob", b =>
-                {
-                    b.Property<int>("SubJobId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
-
-                    b.Property<string>("Description")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int?>("JobId")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("ParentSubJobId")
-                        .HasColumnType("int");
-
-                    b.HasKey("SubJobId");
-
-                    b.HasIndex("JobId");
-
-                    b.HasIndex("ParentSubJobId");
-
-                    b.ToTable("SubJobs");
-                });
-
             modelBuilder.Entity("Delineat.Assistant.Core.Data.Models.Tag", b =>
                 {
                     b.Property<int>("TagId")
@@ -1024,13 +1173,21 @@ namespace Delineat.Workflow.Core.SqlServer.Migrations
                     b.Property<string>("FirstName")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<bool>("HasPaySlip")
+                        .HasColumnType("bit");
+
                     b.Property<string>("LastName")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Nickname")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int?>("WeekWorkId")
+                        .HasColumnType("int");
+
                     b.HasKey("UserId");
+
+                    b.HasIndex("WeekWorkId");
 
                     b.ToTable("Users");
                 });
@@ -1069,6 +1226,42 @@ namespace Delineat.Workflow.Core.SqlServer.Migrations
                         .HasFilter("[Username] IS NOT NULL");
 
                     b.ToTable("UserCredentials");
+                });
+
+            modelBuilder.Entity("Delineat.Assistant.Core.Data.Models.WeekWorkHours", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<string>("Description")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<double>("OnFriday")
+                        .HasColumnType("float");
+
+                    b.Property<double>("OnMonday")
+                        .HasColumnType("float");
+
+                    b.Property<double>("OnSaturday")
+                        .HasColumnType("float");
+
+                    b.Property<double>("OnSunday")
+                        .HasColumnType("float");
+
+                    b.Property<double>("OnThursday")
+                        .HasColumnType("float");
+
+                    b.Property<double>("OnTuesday")
+                        .HasColumnType("float");
+
+                    b.Property<double>("OnWednesday")
+                        .HasColumnType("float");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("WeekWorkHours");
                 });
 
             modelBuilder.Entity("Delineat.Assistant.Core.Data.Models.WorkLog", b =>
@@ -1227,10 +1420,6 @@ namespace Delineat.Workflow.Core.SqlServer.Migrations
                         .WithMany("DayWorkLogs")
                         .HasForeignKey("JobId");
 
-                    b.HasOne("Delineat.Assistant.Core.Data.Models.SubJob", null)
-                        .WithMany("DayWorkLogs")
-                        .HasForeignKey("SubJobId");
-
                     b.HasOne("Delineat.Assistant.Core.Data.Models.User", "User")
                         .WithMany("DayWorkLogs")
                         .HasForeignKey("UserId");
@@ -1351,6 +1540,13 @@ namespace Delineat.Workflow.Core.SqlServer.Migrations
                     b.Navigation("WorkLog");
                 });
 
+            modelBuilder.Entity("Delineat.Assistant.Core.Data.Models.ExtraFieldDomainValue", b =>
+                {
+                    b.HasOne("Delineat.Assistant.Core.Data.Models.ExtraField", null)
+                        .WithMany("ValuesDomain")
+                        .HasForeignKey("ExtraFieldId");
+                });
+
             modelBuilder.Entity("Delineat.Assistant.Core.Data.Models.Item", b =>
                 {
                     b.HasOne("Delineat.Assistant.Core.Data.Models.Job", "Job")
@@ -1441,16 +1637,88 @@ namespace Delineat.Workflow.Core.SqlServer.Migrations
             modelBuilder.Entity("Delineat.Assistant.Core.Data.Models.Job", b =>
                 {
                     b.HasOne("Delineat.Assistant.Core.Data.Models.Customer", "Customer")
-                        .WithMany("Job")
+                        .WithMany("Jobs")
                         .HasForeignKey("CustomerId");
 
                     b.HasOne("Delineat.Assistant.Core.Data.Models.JobGroup", "Group")
                         .WithMany("Jobs")
                         .HasForeignKey("GroupId");
 
+                    b.HasOne("Delineat.Assistant.Core.Data.Models.Job", "Parent")
+                        .WithMany("SubJobs")
+                        .HasForeignKey("ParentJobId");
+
+                    b.OwnsOne("Delineat.Assistant.Core.Data.Models.JobCustomerInfo", "CustomerInfo", b1 =>
+                        {
+                            b1.Property<int>("JobId")
+                                .ValueGeneratedOnAdd()
+                                .HasColumnType("int")
+                                .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                            b1.Property<DateTime?>("Completed")
+                                .HasColumnType("datetime2");
+
+                            b1.Property<int?>("CompletedByUserId")
+                                .HasColumnType("int");
+
+                            b1.Property<DateTime?>("EstimatedClosingDate")
+                                .HasColumnType("datetime2");
+
+                            b1.Property<string>("Info")
+                                .HasColumnType("nvarchar(max)");
+
+                            b1.Property<double>("InvoiceAmount")
+                                .HasColumnType("float");
+
+                            b1.Property<double>("OrderAmount")
+                                .HasColumnType("float");
+
+                            b1.Property<string>("OrderRef")
+                                .HasColumnType("nvarchar(max)");
+
+                            b1.Property<double>("Quotation")
+                                .HasColumnType("float");
+
+                            b1.Property<string>("QuotationRef")
+                                .HasColumnType("nvarchar(max)");
+
+                            b1.Property<DateTime?>("Sent")
+                                .HasColumnType("datetime2");
+
+                            b1.Property<int?>("SentByUserId")
+                                .HasColumnType("int");
+
+                            b1.HasKey("JobId");
+
+                            b1.HasIndex("CompletedByUserId");
+
+                            b1.HasIndex("SentByUserId");
+
+                            b1.ToTable("Jobs");
+
+                            b1.HasOne("Delineat.Assistant.Core.Data.Models.User", "CompletedBy")
+                                .WithMany()
+                                .HasForeignKey("CompletedByUserId");
+
+                            b1.WithOwner()
+                                .HasForeignKey("JobId");
+
+                            b1.HasOne("Delineat.Assistant.Core.Data.Models.User", "SentBy")
+                                .WithMany()
+                                .HasForeignKey("SentByUserId");
+
+                            b1.Navigation("CompletedBy");
+
+                            b1.Navigation("SentBy");
+                        });
+
                     b.Navigation("Customer");
 
+                    b.Navigation("CustomerInfo");
+
                     b.Navigation("Group");
+
+                    b.Navigation("Parent");
                 });
 
             modelBuilder.Entity("Delineat.Assistant.Core.Data.Models.JobCode", b =>
@@ -1458,6 +1726,21 @@ namespace Delineat.Workflow.Core.SqlServer.Migrations
                     b.HasOne("Delineat.Assistant.Core.Data.Models.Job", "Job")
                         .WithMany("Codes")
                         .HasForeignKey("JobId");
+
+                    b.Navigation("Job");
+                });
+
+            modelBuilder.Entity("Delineat.Assistant.Core.Data.Models.JobExtraFieldValue", b =>
+                {
+                    b.HasOne("Delineat.Assistant.Core.Data.Models.ExtraField", "ExtraField")
+                        .WithMany()
+                        .HasForeignKey("ExtraFieldId");
+
+                    b.HasOne("Delineat.Assistant.Core.Data.Models.Job", "Job")
+                        .WithMany("Fields")
+                        .HasForeignKey("JobId");
+
+                    b.Navigation("ExtraField");
 
                     b.Navigation("Job");
                 });
@@ -1614,21 +1897,6 @@ namespace Delineat.Workflow.Core.SqlServer.Migrations
                         .HasForeignKey("StoreSyncLogSyncId");
                 });
 
-            modelBuilder.Entity("Delineat.Assistant.Core.Data.Models.SubJob", b =>
-                {
-                    b.HasOne("Delineat.Assistant.Core.Data.Models.Job", "Job")
-                        .WithMany("SubJobs")
-                        .HasForeignKey("JobId");
-
-                    b.HasOne("Delineat.Assistant.Core.Data.Models.SubJob", "Parent")
-                        .WithMany("SubJobs")
-                        .HasForeignKey("ParentSubJobId");
-
-                    b.Navigation("Job");
-
-                    b.Navigation("Parent");
-                });
-
             modelBuilder.Entity("Delineat.Assistant.Core.Data.Models.Thumbnail", b =>
                 {
                     b.HasOne("Delineat.Assistant.Core.Data.Models.DocumentVersion", "DocumentVersion")
@@ -1645,6 +1913,15 @@ namespace Delineat.Workflow.Core.SqlServer.Migrations
                         .HasForeignKey("JobId");
 
                     b.Navigation("Job");
+                });
+
+            modelBuilder.Entity("Delineat.Assistant.Core.Data.Models.User", b =>
+                {
+                    b.HasOne("Delineat.Assistant.Core.Data.Models.WeekWorkHours", "WeekWork")
+                        .WithMany()
+                        .HasForeignKey("WeekWorkId");
+
+                    b.Navigation("WeekWork");
                 });
 
             modelBuilder.Entity("Delineat.Assistant.Core.Data.Models.UserCredential", b =>
@@ -1695,7 +1972,7 @@ namespace Delineat.Workflow.Core.SqlServer.Migrations
 
             modelBuilder.Entity("Delineat.Assistant.Core.Data.Models.Customer", b =>
                 {
-                    b.Navigation("Job");
+                    b.Navigation("Jobs");
 
                     b.Navigation("Notes");
 
@@ -1725,6 +2002,11 @@ namespace Delineat.Workflow.Core.SqlServer.Migrations
                     b.Navigation("Thumbnails");
                 });
 
+            modelBuilder.Entity("Delineat.Assistant.Core.Data.Models.ExtraField", b =>
+                {
+                    b.Navigation("ValuesDomain");
+                });
+
             modelBuilder.Entity("Delineat.Assistant.Core.Data.Models.Item", b =>
                 {
                     b.Navigation("Documents");
@@ -1743,6 +2025,8 @@ namespace Delineat.Workflow.Core.SqlServer.Migrations
                     b.Navigation("Codes");
 
                     b.Navigation("DayWorkLogs");
+
+                    b.Navigation("Fields");
 
                     b.Navigation("Items");
 
@@ -1784,13 +2068,6 @@ namespace Delineat.Workflow.Core.SqlServer.Migrations
             modelBuilder.Entity("Delineat.Assistant.Core.Data.Models.StoreSyncLog", b =>
                 {
                     b.Navigation("Entries");
-                });
-
-            modelBuilder.Entity("Delineat.Assistant.Core.Data.Models.SubJob", b =>
-                {
-                    b.Navigation("DayWorkLogs");
-
-                    b.Navigation("SubJobs");
                 });
 
             modelBuilder.Entity("Delineat.Assistant.Core.Data.Models.Tag", b =>

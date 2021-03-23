@@ -149,7 +149,7 @@ namespace Delineat.Assistant.API.Controllers
 
 
         [HttpPost()]
-        public ActionResult<DWCustomer> InsertSubJob(int jobId, DASubJobRequest data)
+        public ActionResult<DWSubJob> InsertSubJob(int jobId, DASubJobRequest data)
         {
             try
             {

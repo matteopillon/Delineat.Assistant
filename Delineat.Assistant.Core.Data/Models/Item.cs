@@ -22,7 +22,6 @@ namespace Delineat.Assistant.Core.Data.Models
         public string Who { get; set; }
         public string ItemSource { get; set; }
         public string Color { get; set; }
-        public SubJob SubJob { get; set; }
         public Job Job { get; set; }
         public ICollection<Document> Documents { get; set; }
         public ICollection<ItemsNotes> Notes { get; set; }

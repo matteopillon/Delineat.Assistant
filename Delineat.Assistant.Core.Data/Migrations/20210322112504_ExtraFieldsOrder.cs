@@ -2,22 +2,23 @@
 
 namespace Delineat.Workflow.Core.SqlServer.Migrations
 {
-    public partial class NoteToDayWorkLog : Migration
+    public partial class ExtraFieldsOrder : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AddColumn<string>(
-                name: "Note",
-                table: "DayWorkLogs",
-                type: "nvarchar(max)",
-                nullable: true);
+            migrationBuilder.AddColumn<int>(
+                name: "Order",
+                table: "ExtraFields",
+                type: "int",
+                nullable: false,
+                defaultValue: 0);
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropColumn(
-                name: "Note",
-                table: "DayWorkLogs");
+                name: "Order",
+                table: "ExtraFields");
         }
     }
 }
