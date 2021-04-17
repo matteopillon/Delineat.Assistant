@@ -19,7 +19,10 @@ namespace Delineat.Assistant.API.Helpers
             return dbContext.Jobs.Include(j => j.Customer).Include(j=>j.Codes).Include(j=>j.Fields).ThenInclude(f=>f.ExtraField).FirstOrDefault(j => j.JobId == id);
         }
 
-     
+        public static Item GetItem(this DAAssistantDBContext dbContext, int id)
+        {
+            return dbContext.Items.FirstOrDefault(i => i.ItemId == id);
+        }
 
         public static DayWorkType GetDayWorkType(this DAAssistantDBContext dbContext, int id)
         {

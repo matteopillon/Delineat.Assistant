@@ -125,30 +125,6 @@ namespace Delineat.Assistant.API.Controllers
 
         }
 
-        [HttpPost("{id}/notes")]
-        public ActionResult AddItemNote(int id, DWNote note)
-        {
-            try
-            {
-                note.NoteType = NoteType.Item;
-
-                var result = Store.AddNoteToItem(id, note);
-                if (result.Stored)
-                {
-                    return Ok();
-                }
-                else
-                {
-                    return BadRequest(result.ErrorMessages);
-                }
-
-            }
-            catch (Exception ex)
-            {
-                return Problem(ex);
-            }
-
-        }
 
         [HttpPost("{id}/worklogs")]
         public ActionResult<DWWorkLog> AddItemWorkLog(int id, DWWorkLog log)

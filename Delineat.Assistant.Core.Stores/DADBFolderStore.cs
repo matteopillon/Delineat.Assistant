@@ -326,6 +326,7 @@ namespace Delineat.Assistant.Core.Stores
                         Item = item
                     });
                     dataContext.SaveChanges(true);
+                    note.Id = dbNote.NoteId;
                 }
                 else
                 {
