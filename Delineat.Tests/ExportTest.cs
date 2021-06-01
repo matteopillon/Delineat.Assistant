@@ -28,7 +28,7 @@ namespace Delineat.Tests
         [Test]
         public void MothlyHoursExportTest()
         {
-            var export = new MothlyHoursExport(dbContext);
+            var export = new MothlyHoursExport(dbContext,null);
             string path = Path.Combine(fileDirectoryPath, "Export.xls");
             Assert.True(export.ExportToExcel(path, 1, 2021));
         }

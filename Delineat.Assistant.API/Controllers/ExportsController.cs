@@ -35,7 +35,8 @@ namespace Delineat.Assistant.API.Controllers
             {
                 // Creo un file temporaneo excel
                 var path = Path.ChangeExtension( Path.GetTempFileName(),"xlsx");
-                var export = new MothlyHoursExport(assistantDBContext);
+                var export = new MothlyHoursExport(assistantDBContext,logger);
+                logger.LogInformation($"Export to temp file {path}");
                 if (export.ExportToExcel(path, month, year))
                 {
                     var bytes = System.IO.File.ReadAllBytes(path);

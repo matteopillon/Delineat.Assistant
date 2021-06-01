@@ -1,6 +1,7 @@
 ﻿using Delineat.Assistant.Core.Data;
 using Delineat.Assistant.Core.Data.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Microsoft.Office.Interop.Excel;
 using System;
 using System.Collections.Generic;
@@ -11,10 +12,12 @@ namespace Delineat.Assistan.Exports
     public class MothlyHoursExport
     {
         private readonly DAAssistantDBContext dbContext;
+        private readonly ILogger logger;
 
-        public MothlyHoursExport(DAAssistantDBContext dbContext)
+        public MothlyHoursExport(DAAssistantDBContext dbContext, ILogger logger)
         {
             this.dbContext = dbContext;
+            this.logger = logger;
         }
 
         public bool ExportToExcel(string filePath, int month, int year)
@@ -31,7 +34,7 @@ namespace Delineat.Assistan.Exports
 
             var workLogs = dbContext.DayWorkLogs.Include(d => d.User).ThenInclude(u => u.WeekWork).Include(d => d.Job)
                            .Where(d => d.Date >= startOfTheMonth && d.Date <= endOfTheMonth);
-
+            logger.LogInformation($"Export found {workLogs?.Count()}");
             return ExportToExcel(filePath, workLogs.ToList().GroupBy(d => d.User).ToList(), startOfTheMonth, endOfTheMonth);
 
         }
@@ -121,8 +124,9 @@ namespace Delineat.Assistan.Exports
             try
             {
 
-
+                logger?.LogInformation("Start Excel");
                 excelApplication = new Microsoft.Office.Interop.Excel.Application();
+                logger?.LogInformation("Start Excel completed");
                 workBook = excelApplication.Workbooks.Add();
 
 
@@ -169,9 +173,10 @@ namespace Delineat.Assistan.Exports
                 workBook.Close();
                 completed = true;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-
+                logger?.LogError("Errore in fase di generazione dell'excel", ex);
+                logger?.LogInformation(ex.Message);
             }
             finally
             {
