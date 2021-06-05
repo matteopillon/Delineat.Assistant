@@ -4,14 +4,16 @@ using Delineat.Assistant.Core.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace Delineat.Workflow.Core.SqlServer.Migrations
 {
     [DbContext(typeof(DAAssistantDBContext))]
-    partial class DWDelineatDbContextModelSnapshot : ModelSnapshot
+    [Migration("20210604215707_DayWorkTypeEnabled")]
+    partial class DayWorkTypeEnabled
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

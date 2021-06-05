@@ -34,7 +34,9 @@ namespace Delineat.Assistant.API.Controllers
 
             try
             {
-                return assistantDBContext.DayWorkTypes.Select(d => dwObjectFactory.GetDWDayWorkType(d)).ToArray();
+                return assistantDBContext.DayWorkTypes
+                    .Where(d=>d.Enabled)
+                    .Select(d => dwObjectFactory.GetDWDayWorkType(d)).ToArray();
             }
             catch (Exception ex)
             {

@@ -17,5 +17,7 @@ namespace Delineat.Assistant.Core.Data.Models
         public string Description { get; set; }
 
         public ICollection<DayWorkLog> DayWorkLogs { get; set; }
+
+        public bool Enabled { get; set; }
     }
 }
