@@ -228,7 +228,8 @@ namespace Delineat.Assistant.Core.ObjectFactories
                 {
                     Code = dayWorkType.Code,
                     DayWorkTypeId = dayWorkType.DayWorkTypeId,
-                    Description = dayWorkType.Description
+                    Description = dayWorkType.Description,
+                    Enabled = dayWorkType.Enabled
 
                 };
             }
