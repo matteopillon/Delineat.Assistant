@@ -1674,6 +1674,9 @@ namespace Delineat.Workflow.Core.SqlServer.Migrations
                             b1.Property<double>("InvoiceAmount")
                                 .HasColumnType("float");
 
+                            b1.Property<double>("MinutesQuotation")
+                                .HasColumnType("float");
+
                             b1.Property<double>("OrderAmount")
                                 .HasColumnType("float");
 

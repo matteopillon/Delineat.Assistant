@@ -85,6 +85,7 @@ namespace Delineat.Assistant.Core.ObjectFactories
                     Info = job.CustomerInfo.Info,
                     InvoiceAmount = job.CustomerInfo.InvoiceAmount,
                     OrderAmount = job.CustomerInfo.OrderAmount,
+                    MinutesQuotation = job.CustomerInfo.MinutesQuotation,
                     OrderRef = job.CustomerInfo.QuotationRef,
                     Quotation = job.CustomerInfo.Quotation,
                     QuotationRef = job.CustomerInfo.QuotationRef,

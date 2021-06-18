@@ -80,5 +80,6 @@ namespace Delineat.Assistant.Models
         public DWUser SentBy { get; set; }
 
         public DateTime? EstimatedClosingDate { get; set; }
+        public double MinutesQuotation { get; set; }
     }
 }

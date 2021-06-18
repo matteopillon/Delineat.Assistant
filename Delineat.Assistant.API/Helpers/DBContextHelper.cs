@@ -16,7 +16,13 @@ namespace Delineat.Assistant.API.Helpers
         }
         public static Job GetJob(this DAAssistantDBContext dbContext, int id)
         {
-            return dbContext.Jobs.Include(j => j.Customer).Include(j=>j.Codes).Include(j=>j.Fields).ThenInclude(f=>f.ExtraField).FirstOrDefault(j => j.JobId == id);
+            return dbContext.Jobs.Include(j => j.Customer)
+                .Include(j=>j.Codes)
+                .Include(j => j.Parent)
+                 .Include(j => j.Group)
+                .Include(j=>j.Fields)
+                .ThenInclude(f=>f.ExtraField)
+                .FirstOrDefault(j => j.JobId == id);
         }
 
         public static Item GetItem(this DAAssistantDBContext dbContext, int id)

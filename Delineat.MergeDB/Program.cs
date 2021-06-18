@@ -61,14 +61,14 @@ namespace Delineat.MergeDB
         private static void MergeDB()
         {
 
-            ReadTypes();
-            ReadUsers();
+            //ReadTypes();
+            //ReadUsers();
             ReadCustomers();
-            ReadJobsCustomers();
-            ReadSubJobs();
+            //ReadJobsCustomers();
+            //ReadSubJobs();
 
-            ReadJobExtraInfo();
-            ReadWorkLogs();
+            //ReadJobExtraInfo();
+            //ReadWorkLogs();
         }
 
 
@@ -483,6 +483,7 @@ namespace Delineat.MergeDB
                     var count = 1;
                     while (worksReader.Read())
                     {
+                        
                         if (count % 100 == 0)
                         {
                             LogDebug($"'Registrazione {count}");
@@ -556,7 +557,7 @@ namespace Delineat.MergeDB
                                 {
                                     Date = worksReader.GetDateTime(4).Date,
                                     InsertDate = DateTime.MinValue,
-                                    Job = job,
+                                    Job = subJob ?? job,
                                     Minutes = GetMinutes(worksReader.GetFloat(5)),
                                     Note = string.Empty,
                                     User = op,

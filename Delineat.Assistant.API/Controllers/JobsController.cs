@@ -195,6 +195,7 @@ namespace Delineat.Assistant.API.Controllers
                     Info = data.CustomerInfo.Info,
                     InvoiceAmount = data.CustomerInfo.InvoiceAmount,
                     OrderAmount = data.CustomerInfo.OrderAmount,
+                    MinutesQuotation = data.CustomerInfo.MinutesQuotation,
                     OrderRef = data.CustomerInfo.OrderRef,
                     Quotation = data.CustomerInfo.Quotation,
                     QuotationRef = data.CustomerInfo.QuotationRef,
@@ -225,10 +226,10 @@ namespace Delineat.Assistant.API.Controllers
 
             try
             {
-                if (ValidateBase(job))
+                var dbJob = assistantDBContext.GetJob(id);
+                if (dbJob != null)
                 {
-                    var dbJob = assistantDBContext.GetJob(id);
-                    if (dbJob != null)
+                    if (ValidateBase(job, dbJob?.Parent?.JobId))
                     {
                         var dwJob = this.dwObjectFactory.GetDWJob(FillFromRequest(dbJob, job));
                         var validation = new DAModelValidator(Store).Validate(dwJob);
@@ -255,7 +256,7 @@ namespace Delineat.Assistant.API.Controllers
                                             {
                                                 dbJob.Fields.Add(currentFieldValue);
                                             }
-                                        }                                       
+                                        }
                                         SetExtraFieldValues(currentFieldValue, field);
                                     }
                                     assistantDBContext.Jobs.Update(dbJob);
@@ -276,16 +277,16 @@ namespace Delineat.Assistant.API.Controllers
                         {
                             return BadRequest(ModelState);
                         }
+
                     }
                     else
                     {
-                        return NotFound();
+                        return BadRequest(ModelState);
                     }
                 }
-
                 else
                 {
-                    return BadRequest(ModelState);
+                    return NotFound();
                 }
             }
             catch (Exception ex)
@@ -305,7 +306,7 @@ namespace Delineat.Assistant.API.Controllers
                     extraFieldValue.TextValue = boolData ? "SI" : "NO";
                     break;
                 case ExtraFieldType.Date:
-                    extraFieldValue.DateTimeValue = field.DateTimeValue ;
+                    extraFieldValue.DateTimeValue = field.DateTimeValue;
                     extraFieldValue.TextValue = extraFieldValue.DateTimeValue.HasValue ? extraFieldValue.DateTimeValue.Value.ToString("dd/MM/yyyy HH:mm:ss") : string.Empty;
                     extraFieldValue.NumberValue = extraFieldValue.DateTimeValue.HasValue ? extraFieldValue.DateTimeValue.Value.Ticks : 0;
                     break;

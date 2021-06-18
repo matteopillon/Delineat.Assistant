@@ -69,7 +69,7 @@ namespace Delineat.Assistant.Core.Stores
                 .Include(j => j.Topics)
                 .Include(j => j.Customer)
                 .Include(j => j.Codes)
-                .Include(j => j.Parent)              
+                .Include(j => j.Parent)
                 .Include(j => j.SubJobs).ThenInclude(sj => sj.Customer)
                 .Include(j => j.SubJobs).ThenInclude(sj => sj.Parent)
                 .Include(j => j.Tags).ThenInclude(t => t.Tag);
@@ -431,7 +431,7 @@ namespace Delineat.Assistant.Core.Stores
                 dbJob.Description = job.Description;
                 dbJob.Code = job.Code;
                 if (dbJob.Codes == null) dbJob.Codes = new List<JobCode>();
-                if (job.Customer!= null && dbJob.Customer !=null && job.Customer.CustomerId != dbJob.Customer?.CustomerId )
+                if (job.Customer != null && dbJob.Customer != null && job.Customer.CustomerId != dbJob.Customer?.CustomerId)
                 {
                     dbJob.Customer = dataContext.Customers.FirstOrDefault(c => c.CustomerId == job.Customer.CustomerId);
                 }
@@ -482,9 +482,11 @@ namespace Delineat.Assistant.Core.Stores
                 }
 
 
-
-                var syncStore = GetSyncStore(dbJob.Group);
-                syncStore?.SyncJob(job);
+                if (dbJob.Group != null)
+                {
+                    var syncStore = GetSyncStore(dbJob.Group);
+                    syncStore?.SyncJob(job);
+                }
                 dbJob.Path = Trim(job.Path);
                 SaveChangesAndSync();
                 //Salvo il nuovo id inserito

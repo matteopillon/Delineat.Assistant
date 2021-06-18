@@ -19,6 +19,8 @@ namespace Delineat.Assistant.Core.Data.Models
 
         public double OrderAmount { get; set; }
 
+        public double MinutesQuotation { get; set; }
+
         public DateTime? Completed { get; set; }
 
         public User CompletedBy { get; set; }
