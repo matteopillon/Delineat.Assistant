@@ -36,6 +36,7 @@ namespace Delineat.Assistant.Core.Data.Models
 
         public JobCustomerInfo CustomerInfo { get; set; }
 
+        public JobType JobType { get; set; }
         public string Path { get; set; }
 
         public bool IsAbsence { get; set; }

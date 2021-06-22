@@ -44,11 +44,6 @@ namespace Delineat.MergeDB
                     accessConnection.Close();
                 }
 
-
-
-
-
-
             }
             catch (Exception ex)
             {
@@ -60,12 +55,16 @@ namespace Delineat.MergeDB
 
         private static void MergeDB()
         {
-
+            ReadJobTypes();
+            PatchJobTypes();
+           
             //ReadTypes();
-            //ReadUsers();
-            PatchCustomers();
 
-            PatchJobsCustomers();
+
+            //ReadUsers();
+            // PatchCustomers();
+
+            // PatchJobsCustomers();
             //ReadSubJobs();
 
             //ReadJobExtraInfo();
@@ -110,6 +109,44 @@ namespace Delineat.MergeDB
 
             }
             LogDebug("Caricamento tipologie completato");
+        }
+
+        private static void ReadJobTypes()
+        {
+            LogDebug("Caricamento tipologie job");
+            // recupero tutti i clienti
+            // Apro la tabella delle commesse in access
+            using (var readTypesCommand = accessConnection.CreateCommand())
+            {
+                readTypesCommand.CommandText = "SELECT distinct tipologia FROM codici_commesse";
+                using (var typesReader = readTypesCommand.ExecuteReader())
+                {
+                    while (typesReader.Read())
+                    {
+                        if (!typesReader.IsDBNull(0))
+                        {
+                            var type = typesReader.GetString(0);
+
+                            if (!string.IsNullOrWhiteSpace(type))
+                            {
+
+                                var dbType = dbContext.JobTypes.FirstOrDefault(c => c.Description == type);
+                                if (dbType == null)
+                                {
+                                    dbType = new JobType();
+                                    dbType.Description = type;
+
+                                    dbContext.JobTypes.Add(dbType);
+                                    dbContext.SaveChanges();
+                                }
+                            }
+
+                        }
+                    }
+                }
+
+            }
+            LogDebug("Caricamento tipologie job completato");
         }
 
         private static void ReadUsers()
@@ -362,7 +399,7 @@ namespace Delineat.MergeDB
                                 {
                                     customer = new Customer();
                                     customer.Code = code;
-                                    customer.Description =  description;
+                                    customer.Description = description;
                                     customer.InsertDate = DateTime.Now;
                                     dbContext.Customers.Add(customer);
                                     dbContext.SaveChanges();
@@ -517,6 +554,92 @@ namespace Delineat.MergeDB
 
             }
             LogDebug("Associazione Commesse-Clienti completata");
+        }
+
+        private static void PatchJobTypes()
+        {
+            LogDebug("Associazione Commesse-Tipo");
+
+
+            // recupero tutti i clienti
+            // I clienti sono correttamente associati alla commessa e la patch dei clienti dovrebbe aver sistemato la descrizione
+            // Devo associare le sottocommesse al cliente corretto
+            using (var readJobsCommand = accessConnection.CreateCommand())
+            {
+                readJobsCommand.CommandText = "SELECT distinct commessa, [sub-cod], tipologia, Id FROM codici_commesse";
+                using (var jobsReader = readJobsCommand.ExecuteReader())
+                {
+                    while (jobsReader.Read())
+                    {
+                        if (!jobsReader.IsDBNull(0))
+                        {
+                            var jobCode = jobsReader.GetString(0).ToUpper();
+
+                            var subJobCode = -1;
+                            if (!jobsReader.IsDBNull(1))
+                            {
+                                subJobCode = jobsReader.GetInt32(1);
+                            }
+
+                            if (!string.IsNullOrWhiteSpace(jobCode))
+                            {
+                                var job = dbContext.Jobs.Include(c => c.Customer).Include(c => c.SubJobs).ThenInclude(sj => sj.Customer).FirstOrDefault(c => c.Code.ToLower() == jobCode.ToLower());
+                                if (job == null)
+                                {
+                                    LogWarning($"Commessa con codice {jobCode} non trovata");
+                                }
+                                else
+                                {
+                                    var subJob = job.SubJobs?.FirstOrDefault(sj => sj.Code == subJobCode.ToString());
+                                    if (subJob == null && subJobCode != -1)
+                                    {
+                                        LogWarning($"SottoCommessa con codice {subJobCode} non trovata per commessa {jobCode}");
+                                    }
+
+                                    var tipologia = string.Empty;
+                                    if (!jobsReader.IsDBNull(2))
+                                    {
+                                        tipologia = jobsReader.GetString(2);
+                                    }
+                                    JobType jobType = null;
+                                    if (!string.IsNullOrWhiteSpace(tipologia))
+                                    {
+                                        jobType = dbContext.JobTypes.FirstOrDefault(c => c.Description.Equals(tipologia));
+                                        if (jobType == null)
+                                        {
+                                            LogWarning($"Tipologia {tipologia} non trovata ( Sottocommessa {subJobCode} commessa {jobCode})");
+                                        }
+                                    }
+
+                                    if (subJob != null)
+                                    {
+                                        subJob.JobType = jobType;
+                                        dbContext.Update<Job>(subJob);
+                                        dbContext.SaveChanges();
+                                        LogDebug($"Modificato tipo sottocommessa {subJobCode} della commessa {jobCode} in {jobType?.Description ?? "Nessuna tipologia"}");
+                                    }
+                                    else
+                                    {
+                                        LogWarning($"La commessa con {jobCode}");
+                                        job.JobType = jobType;
+                                        dbContext.Update<Job>(job);
+                                        dbContext.SaveChanges();
+                                        LogDebug($"Modificato tipo della commessa {jobCode} in {jobType?.Description ?? "Nessuna tipologia"}");
+                                    }
+
+                                }
+                            }
+
+                        }
+                        else
+                        {
+                            LogWarning($"Commessa con id {jobsReader.GetInt32(3)} senza cliente o commessa");
+                        }
+                    }
+                }
+
+            }
+            LogDebug("Associazione Commesse-Tipo completata");
         }
 
         private static void ReadSubJobs()
