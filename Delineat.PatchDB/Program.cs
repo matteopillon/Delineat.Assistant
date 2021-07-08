@@ -5,6 +5,7 @@ using Microsoft.Extensions.Configuration;
 using Serilog;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 
 namespace Delineat.MergeDB
@@ -55,12 +56,12 @@ namespace Delineat.MergeDB
 
         private static void MergeDB()
         {
-            ReadJobTypes();
-            PatchJobTypes();
-           
+            // ReadJobTypes();
+            //PatchJobTypes();
+
             //ReadTypes();
 
-
+            PatchJobsBeginDate();
             //ReadUsers();
             // PatchCustomers();
 
@@ -71,6 +72,87 @@ namespace Delineat.MergeDB
             //ReadWorkLogs();
         }
 
+        private static void PatchJobsBeginDate()
+        {
+            LogDebug("Associazione Commessa Data inizio");
+
+            var culture = new CultureInfo("it-IT");
+            // recupero tutti i clienti
+            // I clienti sono correttamente associati alla commessa e la patch dei clienti dovrebbe aver sistemato la descrizione
+            // Devo associare le sottocommesse al cliente corretto
+            using (var readJobsCommand = accessConnection.CreateCommand())
+            {
+                readJobsCommand.CommandText = "SELECT distinct commessa, [sub-cod], [data inizio], Id FROM codici_commesse";
+                using (var jobsReader = readJobsCommand.ExecuteReader())
+                {
+                    while (jobsReader.Read())
+                    {
+                        if (!jobsReader.IsDBNull(0))
+                        {
+                            var jobCode = jobsReader.GetString(0).ToUpper();
+
+                            var subJobCode = -1;
+                            if (!jobsReader.IsDBNull(1))
+                            {
+                                subJobCode = jobsReader.GetInt32(1);
+                            }
+
+                            if (!string.IsNullOrWhiteSpace(jobCode))
+                            {
+                                var job = dbContext.Jobs.Include(c => c.Customer).Include(c => c.SubJobs).ThenInclude(sj => sj.Customer).FirstOrDefault(c => c.Code.ToLower() == jobCode.ToLower());
+                                if (job == null)
+                                {
+                                    LogWarning($"Commessa con codice {jobCode} non trovata");
+                                }
+                                else
+                                {
+                                    var subJob = job.SubJobs?.FirstOrDefault(sj => sj.Code == subJobCode.ToString());
+                                    if (subJob == null && subJobCode != -1)
+                                    {
+                                        LogWarning($"SottoCommessa con codice {subJobCode} non trovata per commessa {jobCode}");
+                                    }
+
+                                    var dataInizio = DateTime.MinValue;
+                                    if (!jobsReader.IsDBNull(2))
+                                    {
+                                        if (!DateTime.TryParseExact(jobsReader.GetString(2), "dd/MM/yyyy", culture, DateTimeStyles.None, out dataInizio))
+                                        {
+                                            LogWarning($"Date time non valido {jobsReader.GetString(2)}");
+                                            dataInizio = DateTime.MaxValue;
+                                        }
+                                    }
+
+                                    if (subJob != null)
+                                    {
+                                        subJob.BeginDate = dataInizio;
+                                        dbContext.Update<Job>(subJob);
+                                        dbContext.SaveChanges();
+                                        LogDebug($"Modificata la data inizio sottocommessa {subJobCode} della commessa {jobCode} in {dataInizio}");
+                                    }
+                                    else
+                                    {
+
+                                        job.BeginDate = dataInizio;
+                                        dbContext.Update<Job>(job);
+                                        dbContext.SaveChanges();
+                                        LogDebug($"Modificata la data inizio della commessa {jobCode} in {dataInizio}");
+                                    }
+
+
+                                }
+                            }
+
+                        }
+                        else
+                        {
+                            LogWarning($"Commessa con id {jobsReader.GetInt32(3)} senza cliente o commessa");
+                        }
+                    }
+                }
+
+            }
+            LogDebug("Associazione Commesse Data Inizio");
+        }
 
         private static void ReadTypes()
         {

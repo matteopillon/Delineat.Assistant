@@ -81,5 +81,7 @@ namespace Delineat.Assistant.Models
 
         public DateTime? EstimatedClosingDate { get; set; }
         public double MinutesQuotation { get; set; }
+
+        
     }
 }

@@ -1,4 +1,5 @@
 ﻿using Delineat.Assistant.Models;
+using System;
 
 namespace Delineat.Assistant.API.Models
 {
@@ -7,7 +8,9 @@ namespace Delineat.Assistant.API.Models
     {
         public string Code { get; set; }
         public string Description { get; set; }
-        public DWJobCustomerInfo CustomerInfo { get; set; }       
+        public DWJobCustomerInfo CustomerInfo { get; set; }
+
+        public DateTime? BeginDate { get; set; }
         public int CustomerId { get; set; }
 
         public DAJobFieldValue[] Fields { get; set; }

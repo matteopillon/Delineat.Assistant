@@ -156,6 +156,12 @@ namespace Delineat.Assistant.API.Controllers
             {
                 // Verificare esistenza codice commessa?
             }
+
+            if (!data.BeginDate.HasValue)
+            {
+                ModelState.AddModelError(nameof(data.BeginDate), "Data inizio commessa non valorizzata");
+            }
+
             if (string.IsNullOrWhiteSpace(data.Description))
             {
                 ModelState.AddModelError(nameof(data.Description), "Descrizione commessa non valorizzata");
@@ -187,6 +193,18 @@ namespace Delineat.Assistant.API.Controllers
             job.Code = data.Code;
             job.Customer = data.CustomerId > 0 ? assistantDBContext.GetCustomer(data.CustomerId) : null;
             job.Description = data.Description;
+            if (data.BeginDate.HasValue)
+            {
+                if (data.BeginDate.Value.Kind == DateTimeKind.Utc)
+                {
+                    job.BeginDate = data.BeginDate.Value.ToLocalTime().Date;
+                }
+                else
+                {
+                    job.BeginDate = data.BeginDate.Value.Date;
+                }
+                
+            }
             if (data.CustomerInfo != null)
             {
                 job.CustomerInfo = new JobCustomerInfo()
@@ -262,7 +280,7 @@ namespace Delineat.Assistant.API.Controllers
                                     assistantDBContext.Jobs.Update(dbJob);
                                     assistantDBContext.SaveChanges();
                                 }
-                                return dwJob;
+                                return this.GetJob(dbJob.JobId);
                             }
                             else
                             {
